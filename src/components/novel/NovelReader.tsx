@@ -57,7 +57,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   const [currentPage, setCurrentPage] = useState(0);
   const bookRef = useRef(null);
   
-  // Split content into chunks for pages
+  // Split content into chunks for pages, but reverse the array for RTL reading
   const splitContentIntoPages = (text: string): string[] => {
     if (!text) return [];
     
@@ -92,21 +92,26 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       remainingText = remainingText.substring(breakPoint);
     }
     
+    // Reverse the array for RTL reading (except the title page)
+    const titlePage = pages.shift(); // Remove the title page
+    pages.reverse(); // Reverse the content pages
+    pages.unshift(titlePage!); // Add the title page back at the beginning
+    
     return pages;
   };
   
   const pages = splitContentIntoPages(content);
 
-  // Navigation functions
+  // Navigation functions adjusted for RTL reading
   const nextPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipPrev(); // Changed to flipPrev for RTL reading
+      (bookRef.current as any).pageFlip().flipPrev(); // For RTL reading
     }
   };
 
   const prevPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipNext(); // Changed to flipNext for RTL reading
+      (bookRef.current as any).pageFlip().flipNext(); // For RTL reading
     }
   };
   
@@ -138,7 +143,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 showCover={true}
                 mobileScrollSupport={true}
                 onFlip={handlePageChange}
-                className="book-render"
+                className="book-render flip-book-rtl"
                 startPage={0}
                 style={{ padding: '20px' }}
                 drawShadow={true}
@@ -151,7 +156,6 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 swipeDistance={0}
                 showPageCorners={true}
                 disableFlipByClick={false}
-                direction="rtl" // Added RTL direction here
               >
                 {pages.map((pageContent, index) => (
                   <Page key={index} content={pageContent} pageNumber={index} />
