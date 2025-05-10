@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
+import NovelReader from './NovelReader';
 
 interface NovelSampleTabProps {
   title: string;
@@ -14,6 +15,8 @@ const NovelSampleTab = ({ title, sample, onStartReading }: NovelSampleTabProps) 
     lineHeight: 1.6,
     theme: 'light',
   });
+  
+  const [isReaderOpen, setIsReaderOpen] = useState(false);
   
   return (
     <div className="p-6">
@@ -79,15 +82,30 @@ const NovelSampleTab = ({ title, sample, onStartReading }: NovelSampleTabProps) 
         <div className="whitespace-pre-line leading-relaxed">
           {sample || 'لا يوجد نموذج قراءة متاح لهذه الرواية.'}
         </div>
-        <div className="text-center mt-8">
+        <div className="text-center mt-8 flex justify-center gap-4">
           <Button 
             onClick={onStartReading}
             className="bg-mihrab hover:bg-mihrab-dark"
           >
             متابعة القراءة
           </Button>
+          
+          <Button
+            onClick={() => setIsReaderOpen(true)}
+            className="bg-mihrab-gold hover:bg-mihrab-gold/80"
+          >
+            قراءة بتأثير الكتاب
+          </Button>
         </div>
       </div>
+      
+      {/* Novel Flip Book Reader */}
+      <NovelReader 
+        title={title}
+        content={sample || ''}
+        isOpen={isReaderOpen}
+        onClose={() => setIsReaderOpen(false)}
+      />
     </div>
   );
 };

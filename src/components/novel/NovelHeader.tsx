@@ -1,9 +1,11 @@
 
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Novel } from "@/types/supabase";
 import { formatArabicDate } from '@/lib/dateUtils';
 import NovelCover from "./NovelCover";
 import NovelRating from "./NovelRating";
+import NovelReader from "./NovelReader";
 
 interface NovelHeaderProps {
   novel: Novel;
@@ -12,6 +14,8 @@ interface NovelHeaderProps {
 }
 
 const NovelHeader = ({ novel, onStartReading, onDownload }: NovelHeaderProps) => {
+  const [isReaderOpen, setIsReaderOpen] = useState(false);
+  
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
       <div className="md:flex">
@@ -96,6 +100,13 @@ const NovelHeader = ({ novel, onStartReading, onDownload }: NovelHeaderProps) =>
             </div>
             
             <Button 
+              onClick={() => setIsReaderOpen(true)}
+              className="bg-mihrab-gold hover:bg-mihrab-gold/80 min-w-40"
+            >
+              قراءة بتأثير الكتاب
+            </Button>
+            
+            <Button 
               onClick={onStartReading}
               className="bg-mihrab hover:bg-mihrab-dark min-w-40"
             >
@@ -104,6 +115,14 @@ const NovelHeader = ({ novel, onStartReading, onDownload }: NovelHeaderProps) =>
           </div>
         </div>
       </div>
+      
+      {/* Novel Flip Book Reader */}
+      <NovelReader 
+        title={novel.title}
+        content={novel.sample || ''}
+        isOpen={isReaderOpen}
+        onClose={() => setIsReaderOpen(false)}
+      />
     </div>
   );
 };
