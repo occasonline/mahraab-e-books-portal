@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
@@ -52,6 +53,7 @@ const NovelDetail = () => {
       
       try {
         const fetchedNovel = await getNovelById(id);
+        console.log("Fetched novel content length:", fetchedNovel?.full_description?.length || 0);
         setNovel(fetchedNovel);
         setLoading(false);
       } catch (error) {

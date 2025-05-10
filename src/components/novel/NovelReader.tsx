@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import ReactMarkdown from 'react-markdown';
@@ -145,7 +146,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       }
     } else {
       // خطة بديلة إذا لم يكن عنصر القياس جاهزًا
-      const charsPerPage = 800; // زيادة عدد الأحرف للصفحة الواحدة
+      const charsPerPage = 200; // تقليل عدد الأحرف للصفحة الواحدة لزيادة عدد الصفحات
       
       // تقسيم حسب الفقرات
       const paragraphs = content.split('\n\n');
@@ -168,6 +169,9 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       }
     }
     
+    console.log('Total pages created:', pages.length);
+    console.log('Content length:', content.length);
+    console.log('First page preview:', pages[0]?.substring(0, 50));
     return pages;
   }, [content, title, fontSize]);
   
@@ -576,7 +580,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious 
-                    onClick={() => nextPage()}
+                    onClick={nextPage}
                     className="flex flex-row-reverse"
                     aria-label="الصفحة التالية"
                   />
@@ -586,7 +590,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 
                 <PaginationItem>
                   <PaginationNext 
-                    onClick={() => prevPage()}
+                    onClick={prevPage}
                     className="flex flex-row-reverse"
                     aria-label="الصفحة السابقة"
                   />
@@ -596,7 +600,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
             
             <div className="flex justify-center gap-8">
               <Button 
-                onClick={() => prevPage()}
+                onClick={prevPage}
                 variant="outline" 
                 className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
                 disabled={currentPage === 0}
@@ -605,7 +609,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 الصفحة السابقة
               </Button>
               <Button 
-                onClick={() => nextPage()}
+                onClick={nextPage}
                 variant="outline" 
                 className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
                 disabled={currentPage === pages.length - 1}
