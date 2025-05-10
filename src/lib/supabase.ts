@@ -2,12 +2,20 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 
-// إنشاء عميل Supabase باستخدام متغيرات البيئة التي توفرها Lovable
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+// في Lovable، بيانات الاتصال بـ Supabase تكون متاحة في window.ENV بعد ربط المشروع بـ Supabase
+const ENV = (window as any).ENV || {};
+const supabaseUrl = ENV.VITE_SUPABASE_URL;
+const supabaseKey = ENV.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('خطأ: متغيرات البيئة لـ Supabase غير متوفرة. تأكد من تفعيل اتصال Supabase من لوحة التحكم.');
+}
 
 // إنشاء عميل Supabase
-export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+export const supabase = createClient<Database>(
+  supabaseUrl || 'https://placeholder-url.supabase.co',
+  supabaseKey || 'placeholder-key'
+);
 
 // تصدير نوع البيانات من مكتبة supabase
 export type { User } from '@supabase/supabase-js';
