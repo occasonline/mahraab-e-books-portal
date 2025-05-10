@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
@@ -162,17 +163,17 @@ const NovelDetail = () => {
               </div>
               
               <div className="md:w-2/3 p-6 md:p-8">
-                <h1 className="text-3xl md:text-4xl font-heading font-bold text-mihrab mb-2">
+                <h1 className="text-3xl md:text-4xl font-heading font-bold text-mihrab mb-2 text-right">
                   {novel.title}
                 </h1>
-                <p className="text-mihrab-dark/70 mb-4">تأليف: {novel.author}</p>
+                <p className="text-mihrab-dark/70 mb-4 text-right">تأليف: {novel.author}</p>
                 
-                <div className="flex items-center mb-4">
-                  {renderStars(4.5)}
+                <div className="flex items-center mb-4 justify-end">
                   <span className="ml-2 text-mihrab-dark/70">4.5/5 ({comments.length} تقييمات)</span>
+                  {renderStars(4.5)}
                 </div>
                 
-                <div className="flex flex-wrap gap-2 mb-4">
+                <div className="flex flex-wrap gap-2 mb-4 justify-end">
                   <span className="bg-mihrab bg-opacity-10 text-mihrab-dark text-xs px-3 py-1 rounded-full">
                     {novel.category}
                   </span>
@@ -183,7 +184,7 @@ const NovelDetail = () => {
                   ))}
                 </div>
                 
-                <p className="text-mihrab-dark/90 leading-relaxed mb-6">
+                <p className="text-mihrab-dark/90 leading-relaxed mb-6 text-right">
                   {novel.description}
                 </p>
                 
@@ -210,14 +211,7 @@ const NovelDetail = () => {
                   </div>
                 </div>
                 
-                <div className="flex flex-wrap gap-4">
-                  <Button 
-                    onClick={handleStartReading}
-                    className="bg-mihrab hover:bg-mihrab-dark min-w-40"
-                  >
-                    ابدأ القراءة
-                  </Button>
-                  
+                <div className="flex flex-wrap gap-4 justify-end">
                   <div className="relative group">
                     <Button variant="outline" className="border-mihrab text-mihrab hover:bg-mihrab-cream min-w-40">
                       تحميل
@@ -237,6 +231,13 @@ const NovelDetail = () => {
                       </button>
                     </div>
                   </div>
+                  
+                  <Button 
+                    onClick={handleStartReading}
+                    className="bg-mihrab hover:bg-mihrab-dark min-w-40"
+                  >
+                    ابدأ القراءة
+                  </Button>
                 </div>
               </div>
             </div>
@@ -253,7 +254,7 @@ const NovelDetail = () => {
               </TabsList>
               
               <TabsContent value="description" className="p-6">
-                <h2 className="text-xl font-heading font-bold text-mihrab mb-4">عن الرواية</h2>
+                <h2 className="text-xl font-heading font-bold text-mihrab mb-4 text-right">عن الرواية</h2>
                 <div className="prose prose-lg max-w-none text-mihrab-dark/80 leading-relaxed whitespace-pre-line text-right">
                   {novel.full_description}
                 </div>
@@ -261,7 +262,6 @@ const NovelDetail = () => {
               
               <TabsContent value="sample" className="p-6">
                 <div className="mb-6 flex justify-between items-center">
-                  <h2 className="text-xl font-heading font-bold text-mihrab">نموذج القراءة</h2>
                   <div className="flex items-center space-x-4 space-x-reverse">
                     <button 
                       onClick={() => setReaderSettings({...readerSettings, fontSize: readerSettings.fontSize - 1})}
@@ -302,6 +302,7 @@ const NovelDetail = () => {
                       )}
                     </button>
                   </div>
+                  <h2 className="text-xl font-heading font-bold text-mihrab text-right">نموذج القراءة</h2>
                 </div>
                 
                 <div 
@@ -334,23 +335,23 @@ const NovelDetail = () => {
               </TabsContent>
               
               <TabsContent value="reviews" className="p-6">
-                <h2 className="text-xl font-heading font-bold text-mihrab mb-4">تقييمات القراء</h2>
+                <h2 className="text-xl font-heading font-bold text-mihrab mb-4 text-right">تقييمات القراء</h2>
                 
                 <div className="space-y-6">
                   {comments.map((comment) => (
                     <div key={comment.id} className="border-b border-mihrab-beige pb-6">
                       <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <p className="font-bold text-mihrab">{comment.userName}</p>
-                          <p className="text-xs text-mihrab-dark/60">
-                            {formatArabicDate(comment.date)}
-                          </p>
-                        </div>
                         <div className="flex">
                           {renderStars(comment.rating)}
                         </div>
+                        <div>
+                          <p className="font-bold text-mihrab text-right">{comment.userName}</p>
+                          <p className="text-xs text-mihrab-dark/60 text-right">
+                            {formatArabicDate(comment.date)}
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-mihrab-dark/80">{comment.content}</p>
+                      <p className="text-mihrab-dark/80 text-right">{comment.content}</p>
                     </div>
                   ))}
                 </div>
@@ -364,7 +365,7 @@ const NovelDetail = () => {
               </TabsContent>
               
               <TabsContent value="recommendations" className="p-6">
-                <h2 className="text-xl font-heading font-bold text-mihrab mb-6">روايات قد تعجبك</h2>
+                <h2 className="text-xl font-heading font-bold text-mihrab mb-6 text-right">روايات قد تعجبك</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="novel-card">
@@ -376,15 +377,15 @@ const NovelDetail = () => {
                       />
                     </div>
                     <div className="p-4">
-                      <h3 className="font-heading text-lg font-bold text-mihrab mb-1">أسرار الصوفية</h3>
-                      <p className="text-sm text-mihrab-dark/70 mb-2">تأليف: محراب التوبة</p>
+                      <h3 className="font-heading text-lg font-bold text-mihrab mb-1 text-right">أسرار الصوفية</h3>
+                      <p className="text-sm text-mihrab-dark/70 mb-2 text-right">تأليف: محراب التوبة</p>
                       <div className="flex justify-between items-center">
-                        <div className="flex">
-                          {renderStars(4.5)}
-                        </div>
                         <Button size="sm" variant="outline" className="text-xs">
                           معرفة المزيد
                         </Button>
+                        <div className="flex">
+                          {renderStars(4.5)}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -398,15 +399,15 @@ const NovelDetail = () => {
                       />
                     </div>
                     <div className="p-4">
-                      <h3 className="font-heading text-lg font-bold text-mihrab mb-1">طريق المريدين</h3>
-                      <p className="text-sm text-mihrab-dark/70 mb-2">تأليف: محراب التوبة</p>
+                      <h3 className="font-heading text-lg font-bold text-mihrab mb-1 text-right">طريق المريدين</h3>
+                      <p className="text-sm text-mihrab-dark/70 mb-2 text-right">تأليف: محراب التوبة</p>
                       <div className="flex justify-between items-center">
-                        <div className="flex">
-                          {renderStars(4.7)}
-                        </div>
                         <Button size="sm" variant="outline" className="text-xs">
                           معرفة المزيد
                         </Button>
+                        <div className="flex">
+                          {renderStars(4.7)}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -420,15 +421,15 @@ const NovelDetail = () => {
                       />
                     </div>
                     <div className="p-4">
-                      <h3 className="font-heading text-lg font-bold text-mihrab mb-1">سراج المعرفة</h3>
-                      <p className="text-sm text-mihrab-dark/70 mb-2">تأليف: محراب التوبة</p>
+                      <h3 className="font-heading text-lg font-bold text-mihrab mb-1 text-right">سراج المعرفة</h3>
+                      <p className="text-sm text-mihrab-dark/70 mb-2 text-right">تأليف: محراب التوبة</p>
                       <div className="flex justify-between items-center">
-                        <div className="flex">
-                          {renderStars(4.6)}
-                        </div>
                         <Button size="sm" variant="outline" className="text-xs">
                           معرفة المزيد
                         </Button>
+                        <div className="flex">
+                          {renderStars(4.6)}
+                        </div>
                       </div>
                     </div>
                   </div>
