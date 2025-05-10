@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { Button } from "@/components/ui/button";
@@ -513,7 +514,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious 
-                    onClick={nextPage}  {/* عكس العملية للتوافق مع RTL */}
+                    onClick={() => nextPage()}
                     className="flex flex-row-reverse"
                     aria-label="الصفحة التالية"
                   />
@@ -523,7 +524,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 
                 <PaginationItem>
                   <PaginationNext 
-                    onClick={prevPage}  {/* عكس العملية للتوافق مع RTL */}
+                    onClick={() => prevPage()}
                     className="flex flex-row-reverse"
                     aria-label="الصفحة السابقة"
                   />
@@ -533,7 +534,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
             
             <div className="flex justify-center gap-8">
               <Button 
-                onClick={prevPage}  {/* عكس العملية للتوافق مع RTL */}
+                onClick={() => prevPage()}
                 variant="outline" 
                 className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
                 disabled={currentPage === 0}
@@ -542,7 +543,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 الصفحة السابقة
               </Button>
               <Button 
-                onClick={nextPage}  {/* عكس العملية للتوافق مع RTL */}
+                onClick={() => nextPage()}
                 variant="outline" 
                 className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
                 disabled={currentPage === pages.length - 1}
