@@ -12,6 +12,15 @@ import {
 } from "@/components/ui/dialog";
 import { ChevronRight, ChevronLeft, Download } from "lucide-react"; 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface NovelReaderProps {
   title: string;
@@ -25,7 +34,8 @@ const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: num
   return (
     <div 
       ref={ref} 
-      className="bg-mihrab-cream p-8 shadow-md" 
+      className="bg-mihrab-cream p-8 shadow-md"
+      dir="rtl" 
       style={{ 
         width: '100%', 
         height: '100%',
@@ -53,7 +63,7 @@ const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: num
           <p className="text-mihrab-dark leading-relaxed whitespace-pre-line font-amiri">
             {props.content}
           </p>
-          <div className="text-center mt-4 text-mihrab-dark/50">
+          <div className="absolute bottom-4 right-4 text-mihrab-dark/50">
             {props.pageNumber}
           </div>
         </div>
@@ -66,13 +76,14 @@ Page.displayName = "Page";
 
 const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const bookRef = useRef(null);
   
-  // Split content into chunks for pages
+  // Split content into chunks for pages with improved algorithm
   const splitContentIntoPages = (text: string): string[] => {
     if (!text) return [];
     
-    const charsPerPage = 800; // Reduced characters per page for better readability
+    const charsPerPage = 600; // Reduced for better readability
     const pages = [];
     
     // Title page
@@ -87,10 +98,10 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       const paragraph = paragraphs[i].trim();
       if (!paragraph) continue;
       
-      if ((currentPageContent + paragraph).length > charsPerPage && currentPageContent.length > 0) {
+      if ((currentPageContent.length + paragraph.length) > charsPerPage && currentPageContent.length > 0) {
         // Current page is full, add it to pages and start a new one
         pages.push(currentPageContent.trim());
-        currentPageContent = paragraph + '\n\n';
+        currentPageContent = paragraph;
       } else {
         // Add paragraph to current page
         currentPageContent += (currentPageContent ? '\n\n' : '') + paragraph;
@@ -107,6 +118,11 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   
   const pages = splitContentIntoPages(content);
 
+  // Set total pages when component mounts or content changes
+  React.useEffect(() => {
+    setTotalPages(pages.length);
+  }, [content]);
+
   // Navigation functions
   const nextPage = () => {
     if (bookRef.current) {
@@ -117,6 +133,12 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   const prevPage = () => {
     if (bookRef.current) {
       (bookRef.current as any).pageFlip().flipPrev();
+    }
+  };
+
+  const goToPage = (pageNumber: number) => {
+    if (bookRef.current) {
+      (bookRef.current as any).pageFlip().flip(pageNumber);
     }
   };
   
@@ -240,9 +262,79 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     URL.revokeObjectURL(url);
   };
 
+  // Generate pagination items
+  const renderPagination = () => {
+    const items = [];
+    const maxDisplayedPages = 7;
+    
+    // Always show first page
+    items.push(
+      <PaginationItem key="first">
+        <PaginationLink 
+          isActive={currentPage === 0}
+          onClick={() => goToPage(0)}
+        >
+          1
+        </PaginationLink>
+      </PaginationItem>
+    );
+    
+    // Show ellipsis if needed
+    if (currentPage > 3) {
+      items.push(
+        <PaginationItem key="ellipsis1">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+    
+    // Show pages around current page
+    const start = Math.max(1, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 3);
+    
+    for (let i = start; i < end; i++) {
+      if (i === 0) continue; // Skip first page as it's already added
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink 
+            isActive={currentPage === i}
+            onClick={() => goToPage(i)}
+          >
+            {i + 1}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    // Show ellipsis if needed
+    if (end < totalPages - 1) {
+      items.push(
+        <PaginationItem key="ellipsis2">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    }
+    
+    // Show last page if not already included
+    if (totalPages > 1 && end !== totalPages - 1) {
+      items.push(
+        <PaginationItem key="last">
+          <PaginationLink 
+            isActive={currentPage === totalPages - 1}
+            onClick={() => goToPage(totalPages - 1)}
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    return items;
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[90vw] max-w-[1000px] h-[80vh] max-h-[800px] p-0 flex flex-col">
+      <DialogContent className="w-[90vw] max-w-[1000px] h-[80vh] max-h-[800px] p-0 flex flex-col" dir="rtl">
         <DialogHeader className="px-4 py-2 flex flex-row justify-between items-center">
           <DialogTitle className="text-mihrab text-xl font-amiri">{title}</DialogTitle>
           <div className="flex items-center gap-2">
@@ -271,7 +363,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
         
         <div className="flex-1 relative overflow-hidden bg-mihrab-beige/30">
           <div className="absolute inset-0 flex justify-center items-center">
-            <div className="w-full h-full max-w-[900px] max-h-[700px]">
+            <div className="w-full h-full max-w-[900px] max-h-[700px]" dir="rtl">
               <HTMLFlipBook
                 ref={bookRef}
                 width={450}
@@ -298,6 +390,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 swipeDistance={0}
                 showPageCorners={true}
                 disableFlipByClick={false}
+                direction="rtl"
               >
                 {pages.map((pageContent, index) => (
                   <Page key={index} content={pageContent} pageNumber={index} />
@@ -306,25 +399,49 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
             </div>
           </div>
           
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-8">
-            <Button 
-              onClick={prevPage}
-              variant="outline" 
-              className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
-              disabled={currentPage === 0}
-            >
-              <ChevronRight size={16} />
-              الصفحة السابقة
-            </Button>
-            <Button 
-              onClick={nextPage}
-              variant="outline" 
-              className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
-              disabled={currentPage === pages.length - 1}
-            >
-              الصفحة التالية
-              <ChevronLeft size={16} />
-            </Button>
+          <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={nextPage} 
+                    className="flex flex-row-reverse"
+                    aria-label="الصفحة التالية"
+                  />
+                </PaginationItem>
+                
+                {renderPagination()}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={prevPage} 
+                    className="flex flex-row-reverse"
+                    aria-label="الصفحة السابقة"
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+            
+            <div className="flex justify-center gap-8">
+              <Button 
+                onClick={prevPage}
+                variant="outline" 
+                className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
+                disabled={currentPage === 0}
+              >
+                <ChevronLeft size={16} />
+                الصفحة السابقة
+              </Button>
+              <Button 
+                onClick={nextPage}
+                variant="outline" 
+                className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
+                disabled={currentPage === pages.length - 1}
+              >
+                الصفحة التالية
+                <ChevronRight size={16} />
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
