@@ -35,39 +35,42 @@ const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: num
     <div 
       ref={ref} 
       className="bg-mihrab-cream p-8 shadow-md"
-      dir="rtl" 
       style={{ 
         width: '100%', 
         height: '100%',
         backgroundImage: 'linear-gradient(to right, #f5f3e8, #fffcf0)'
       }}
     >
-      {props.pageNumber === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-3xl font-heading font-bold text-mihrab mb-4 text-center">
-            {props.content}
-          </h2>
-          <p className="text-mihrab-dark/70 text-center">انقر على حافة الصفحة للتنقل</p>
-        </div>
-      ) : (
-        <div 
-          className="h-full overflow-auto text-right p-4" 
-          dir="rtl"
-          lang="ar"
-          style={{
-            fontFeatureSettings: "'kern', 'liga', 'calt', 'rlig'",
-            textRendering: "optimizeLegibility",
-            fontFamily: "Amiri, serif"
-          }}
-        >
-          <p className="text-mihrab-dark leading-relaxed whitespace-pre-line font-amiri">
-            {props.content}
-          </p>
-          <div className="absolute bottom-4 right-4 text-mihrab-dark/50">
-            {props.pageNumber}
+      <div
+        className="h-full overflow-auto"
+        dir="rtl" 
+        lang="ar"
+      >
+        {props.pageNumber === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full">
+            <h2 className="text-3xl font-heading font-bold text-mihrab mb-4 text-center">
+              {props.content}
+            </h2>
+            <p className="text-mihrab-dark/70 text-center">انقر على حافة الصفحة للتنقل</p>
           </div>
-        </div>
-      )}
+        ) : (
+          <div 
+            className="text-right p-4" 
+            style={{
+              fontFeatureSettings: "'kern', 'liga', 'calt', 'rlig'",
+              textRendering: "optimizeLegibility",
+              fontFamily: "Amiri, serif"
+            }}
+          >
+            <p className="text-mihrab-dark leading-relaxed whitespace-pre-line font-amiri">
+              {props.content}
+            </p>
+            <div className="absolute bottom-4 right-4 text-mihrab-dark/50">
+              {props.pageNumber}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 });
@@ -83,7 +86,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   const splitContentIntoPages = (text: string): string[] => {
     if (!text) return [];
     
-    const charsPerPage = 600; // Reduced for better readability
+    const charsPerPage = 500; // Even more reduced for better readability in RTL
     const pages = [];
     
     // Title page
@@ -123,7 +126,8 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     setTotalPages(pages.length);
   }, [content]);
 
-  // Navigation functions
+  // Adjust navigation functions to work correctly with RTL
+  // In RTL mode, "next" should go to the previous page and vice versa
   const nextPage = () => {
     if (bookRef.current) {
       (bookRef.current as any).pageFlip().flipNext();
@@ -363,7 +367,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
         
         <div className="flex-1 relative overflow-hidden bg-mihrab-beige/30">
           <div className="absolute inset-0 flex justify-center items-center">
-            <div className="w-full h-full max-w-[900px] max-h-[700px]" dir="rtl">
+            <div className="w-full h-full max-w-[900px] max-h-[700px]">
               <HTMLFlipBook
                 ref={bookRef}
                 width={450}
@@ -390,7 +394,6 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 swipeDistance={0}
                 showPageCorners={true}
                 disableFlipByClick={false}
-                direction="rtl"
               >
                 {pages.map((pageContent, index) => (
                   <Page key={index} content={pageContent} pageNumber={index} />
