@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { Button } from "@/components/ui/button";
@@ -48,26 +47,17 @@ const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: num
       >
         {props.pageNumber === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <h2 className="text-3xl font-heading font-bold text-mihrab mb-4 text-center">
+            <h2 className="text-3xl font-amiri font-bold text-mihrab mb-4 text-center">
               {props.content}
             </h2>
-            <p className="text-mihrab-dark/70 text-center">انقر على حافة الصفحة للتنقل</p>
+            <p className="text-mihrab-dark/70 text-center font-amiri">انقر على حافة الصفحة للتنقل</p>
           </div>
         ) : (
-          <div 
-            className="text-right p-4 h-full" 
-            style={{
-              fontFeatureSettings: "'kern', 'liga', 'calt', 'rlig'",
-              textRendering: "optimizeLegibility",
-              fontFamily: "Amiri, serif"
-            }}
-          >
-            <p className="text-mihrab-dark leading-relaxed whitespace-pre-line font-amiri text-lg">
+          <div className="h-full overflow-hidden flex flex-col">
+            <p className="flex-1 overflow-hidden whitespace-pre-line leading-relaxed font-amiri text-mihrab-dark">
               {props.content}
             </p>
-            <div className="absolute bottom-4 left-4 text-mihrab-dark/70">
-              {props.pageNumber}
-            </div>
+            <span className="self-end pr-4 pb-4 text-sm opacity-60">{props.pageNumber}</span>
           </div>
         )}
       </div>
