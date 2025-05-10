@@ -15,6 +15,7 @@ import NovelCategoryFields from "./novel/NovelCategoryFields";
 import NovelTagsField from "./novel/NovelTagsField";
 import NovelSampleField from "./novel/NovelSampleField";
 import NovelSettingsFields from "./novel/NovelSettingsFields";
+import NovelPreview from "./novel/NovelPreview";
 
 interface NovelEditorProps {
   novelId: string | null; // "new" لإضافة رواية جديدة أو معرف الرواية للتعديل
@@ -24,6 +25,7 @@ interface NovelEditorProps {
 
 const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
   const [showChapterEditor, setShowChapterEditor] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   
   // تهيئة نموذج التحرير
   const form = useForm<NovelFormValues>({
@@ -62,6 +64,9 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
     onSave();
   };
 
+  // Get form data for preview
+  const formValues = form.watch();
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -82,6 +87,14 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
               {showChapterEditor ? "تفاصيل الرواية" : "تحرير الفصول"}
             </Button>
           )}
+
+          <Button 
+            variant="outline" 
+            className="mr-2"
+            onClick={() => setShowPreview(prev => !prev)}
+          >
+            {showPreview ? "إخفاء المعاينة" : "معاينة"}
+          </Button>
         </div>
       </div>
       
@@ -90,6 +103,10 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {showPreview && (
+              <NovelPreview data={formValues} />
+            )}
+
             <NovelBasicFields form={form} />
             <NovelDescriptionFields form={form} />
             <NovelCategoryFields form={form} />
