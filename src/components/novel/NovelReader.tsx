@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +34,7 @@ const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: num
   return (
     <div 
       ref={ref} 
-      className="bg-mihrab-cream p-8 shadow-md"
+      className="bg-mihrab-cream p-4 shadow-md"
       style={{ 
         width: '100%', 
         height: '100%',
@@ -42,7 +42,7 @@ const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: num
       }}
     >
       <div
-        className="h-full overflow-auto"
+        className="h-full overflow-hidden"
         dir="rtl" 
         lang="ar"
       >
@@ -55,17 +55,17 @@ const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: num
           </div>
         ) : (
           <div 
-            className="text-right p-4" 
+            className="text-right p-4 h-full" 
             style={{
               fontFeatureSettings: "'kern', 'liga', 'calt', 'rlig'",
               textRendering: "optimizeLegibility",
               fontFamily: "Amiri, serif"
             }}
           >
-            <p className="text-mihrab-dark leading-relaxed whitespace-pre-line font-amiri">
+            <p className="text-mihrab-dark leading-relaxed whitespace-pre-line font-amiri text-lg">
               {props.content}
             </p>
-            <div className="absolute bottom-4 right-4 text-mihrab-dark/50">
+            <div className="absolute bottom-4 left-4 text-mihrab-dark/70">
               {props.pageNumber}
             </div>
           </div>
@@ -86,7 +86,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   const splitContentIntoPages = (text: string): string[] => {
     if (!text) return [];
     
-    const charsPerPage = 500; // Even more reduced for better readability in RTL
+    const charsPerPage = 350; // Reduced for better Arabic text display
     const pages = [];
     
     // Title page
@@ -122,21 +122,25 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   const pages = splitContentIntoPages(content);
 
   // Set total pages when component mounts or content changes
-  React.useEffect(() => {
+  useEffect(() => {
     setTotalPages(pages.length);
-  }, [content]);
+  }, [content, pages.length]);
 
-  // Adjust navigation functions to work correctly with RTL
-  // In RTL mode, "next" should go to the previous page and vice versa
+  // Handle page changing event
+  const handlePageChange = (e: any) => {
+    setCurrentPage(e.data);
+  };
+
+  // Navigation functions that respect RTL direction
   const nextPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipNext();
+      (bookRef.current as any).pageFlip().flipPrev(); // Reversed for RTL
     }
   };
 
   const prevPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipPrev();
+      (bookRef.current as any).pageFlip().flipNext(); // Reversed for RTL
     }
   };
 
@@ -144,10 +148,6 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     if (bookRef.current) {
       (bookRef.current as any).pageFlip().flip(pageNumber);
     }
-  };
-  
-  const handlePageChange = (e: any) => {
-    setCurrentPage(e.data);
   };
 
   // Export functions
@@ -366,7 +366,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
         </DialogDescription>
         
         <div className="flex-1 relative overflow-hidden bg-mihrab-beige/30">
-          <div className="absolute inset-0 flex justify-center items-center">
+          <div dir="rtl" className="absolute inset-0 flex justify-center items-center">
             <div className="w-full h-full max-w-[900px] max-h-[700px]">
               <HTMLFlipBook
                 ref={bookRef}
@@ -386,7 +386,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 style={{ padding: '20px' }}
                 drawShadow={true}
                 flippingTime={1000}
-                usePortrait={true}
+                usePortrait={false}
                 startZIndex={0}
                 autoSize={true}
                 clickEventForward={true}
@@ -394,6 +394,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 swipeDistance={0}
                 showPageCorners={true}
                 disableFlipByClick={false}
+                renderOnlyPageLengthChange={false}
               >
                 {pages.map((pageContent, index) => (
                   <Page key={index} content={pageContent} pageNumber={index} />
@@ -403,11 +404,15 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
           </div>
           
           <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-4">
+            <div className="text-mihrab-dark bg-white/80 px-3 py-1 rounded-full text-sm">
+              الصفحة {currentPage + 1} من {totalPages}
+            </div>
+            
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious 
-                    onClick={nextPage} 
+                    onClick={prevPage} 
                     className="flex flex-row-reverse"
                     aria-label="الصفحة التالية"
                   />
@@ -417,7 +422,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 
                 <PaginationItem>
                   <PaginationNext 
-                    onClick={prevPage} 
+                    onClick={nextPage} 
                     className="flex flex-row-reverse"
                     aria-label="الصفحة السابقة"
                   />
@@ -427,22 +432,22 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
             
             <div className="flex justify-center gap-8">
               <Button 
-                onClick={prevPage}
+                onClick={nextPage}
                 variant="outline" 
                 className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
                 disabled={currentPage === 0}
               >
-                <ChevronLeft size={16} />
+                <ChevronRight size={16} />
                 الصفحة السابقة
               </Button>
               <Button 
-                onClick={nextPage}
+                onClick={prevPage}
                 variant="outline" 
                 className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
                 disabled={currentPage === pages.length - 1}
               >
                 الصفحة التالية
-                <ChevronRight size={16} />
+                <ChevronLeft size={16} />
               </Button>
             </div>
           </div>
