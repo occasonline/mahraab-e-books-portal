@@ -37,7 +37,7 @@ const MarkdownImporter = ({ onImport, onCancel }: MarkdownImporterProps) => {
   };
 
   const parseMarkdown = async (content: string): Promise<Partial<NovelFormValues>> => {
-    // Basic parsing logic - this could be enhanced with a more robust markdown parser
+    // Enhanced parsing logic for better markdown extraction
     const lines = content.split('\n');
     let result: Partial<NovelFormValues> = {};
     
@@ -57,28 +57,41 @@ const MarkdownImporter = ({ onImport, onCancel }: MarkdownImporterProps) => {
     const descriptionMatch = content.match(/^([^#].+?)(?=\n#|\n\n#|\n\n\n)/s);
     if (descriptionMatch) {
       result.description = descriptionMatch[1].trim();
+      
       // Use the first part as short description and the rest as full description
       const description = descriptionMatch[1].trim();
       const parts = description.split('\n\n');
       if (parts.length > 1) {
         result.description = parts[0];
-        result.fullDescription = description;
-      } else {
-        result.description = description;
-        result.fullDescription = description;
       }
     }
     
-    // Look for a sample section
+    // Set the full content as fullDescription
+    // Remove potential metadata from the top (like title, author)
+    let fullContent = content;
+    if (titleMatch) {
+      fullContent = fullContent.replace(titleMatch[0], '').trim();
+    }
+    
+    // Remove potential YAML frontmatter if present
+    fullContent = fullContent.replace(/^---\n[\s\S]*?\n---\n/, '').trim();
+    
+    // Set the fullDescription to the entire processed content
+    result.fullDescription = fullContent;
+    
+    // Look for a sample section or extract first portion
     const sampleMatch = content.match(/##\s+نموذج|عينة|مقتطف\s*\n([\s\S]+?)(?=\n##|$)/i);
     if (sampleMatch) {
       result.sample = sampleMatch[1].trim();
     } else {
-      // If no explicit sample, take a portion from the middle of the text
-      const contentLines = content.split('\n').filter(line => !line.startsWith('#'));
-      const cleanContent = contentLines.join('\n').trim();
-      if (cleanContent.length > 100) {
-        result.sample = cleanContent.substring(0, 500);
+      // If no explicit sample, take a portion from the beginning of the text
+      const contentWithoutHeadings = content.replace(/^#.*$/gm, '').trim();
+      if (contentWithoutHeadings.length > 100) {
+        // Take first 500 characters or first few paragraphs as sample
+        const firstParagraphs = contentWithoutHeadings.split('\n\n').slice(0, 2).join('\n\n');
+        result.sample = firstParagraphs.length > 500 
+          ? firstParagraphs.substring(0, 500) + '...' 
+          : firstParagraphs;
       }
     }
     

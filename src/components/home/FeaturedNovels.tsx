@@ -86,7 +86,7 @@ const FeaturedNovels = () => {
                   className="novel-cover" 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-mihrab/90 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                  <p className="text-white text-sm">{novel.description}</p>
+                  <p className="text-white text-sm line-clamp-4">{novel.description}</p>
                 </div>
                 {novel.is_premium && (
                   <div className="absolute top-2 right-2 bg-mihrab-gold text-white text-xs font-bold px-2 py-1 rounded-full">
