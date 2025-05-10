@@ -10,6 +10,7 @@ interface EpubNavigationProps {
   progressPercentage: number;
   prevPage: () => void;
   nextPage: () => void;
+  isLoading?: boolean;
 }
 
 const EpubNavigation: React.FC<EpubNavigationProps> = ({
@@ -17,18 +18,23 @@ const EpubNavigation: React.FC<EpubNavigationProps> = ({
   totalPages,
   progressPercentage,
   prevPage,
-  nextPage
+  nextPage,
+  isLoading = false
 }) => {
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <div className="absolute bottom-4 left-0 right-0 px-8">
-      <div className="bg-white/90 dark:bg-mihrab-dark/90 rounded-full py-2 px-4 shadow-md">
+      <div className="bg-white/90 dark:bg-mihrab-dark/90 rounded-full py-3 px-5 shadow-md">
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm text-mihrab-dark/70 dark:text-mihrab-cream/70">
             {progressPercentage}%
           </div>
           
-          <div className="text-sm text-mihrab-dark dark:text-mihrab-cream">
-            الصفحة {currentPage} من {totalPages}
+          <div className="text-sm font-medium text-mihrab-dark dark:text-mihrab-cream">
+            الصفحة {currentPage} من {totalPages || "؟"}
           </div>
         </div>
         
@@ -42,6 +48,7 @@ const EpubNavigation: React.FC<EpubNavigationProps> = ({
             onClick={prevPage}
             variant="outline" 
             className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
+            disabled={currentPage <= 1}
           >
             <ChevronRight size={16} />
             الصفحة السابقة
@@ -50,6 +57,7 @@ const EpubNavigation: React.FC<EpubNavigationProps> = ({
             onClick={nextPage}
             variant="outline" 
             className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
+            disabled={currentPage >= totalPages && totalPages > 0}
           >
             الصفحة التالية
             <ChevronLeft size={16} />

@@ -1,6 +1,7 @@
 
-import React, { useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import React from 'react';
+import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface EpubRendererProps {
   isLoading: boolean;
@@ -23,12 +24,20 @@ const EpubRenderer: React.FC<EpubRendererProps> = ({
   prevPage,
   nextPage
 }) => {
+  const reloadBook = () => {
+    // Force reload the current page
+    window.location.reload();
+  };
+  
   if (isLoading) {
     return (
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block w-8 h-8 border-4 border-mihrab/30 border-t-mihrab rounded-full animate-spin mb-2"></div>
-          <p className="text-mihrab-dark dark:text-mihrab-cream">جاري تحميل الكتاب...</p>
+        <div className="text-center bg-white/80 dark:bg-mihrab-dark/80 p-8 rounded-lg shadow-lg">
+          <div className="inline-block w-12 h-12 border-4 border-mihrab/30 border-t-mihrab rounded-full animate-spin mb-4"></div>
+          <p className="text-mihrab-dark dark:text-mihrab-cream text-lg mb-2">جاري تحميل الكتاب...</p>
+          <p className="text-mihrab-dark/70 dark:text-mihrab-cream/70 text-sm">
+            قد يستغرق التحميل بضع ثوانٍ للكتب الكبيرة
+          </p>
         </div>
       </div>
     );
@@ -37,20 +46,31 @@ const EpubRenderer: React.FC<EpubRendererProps> = ({
   if (error) {
     return (
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center p-4 max-w-md">
+        <div className="text-center p-6 max-w-md bg-white dark:bg-mihrab-dark rounded-lg shadow-lg">
           <p className="text-red-500 font-bold mb-4">{error}</p>
           <p className="text-mihrab-dark dark:text-mihrab-cream mb-4">
             لم نتمكن من عرض الكتاب الإلكتروني. يرجى التحقق من صحة الملف أو تحميله مرة أخرى.
           </p>
-          <div className="text-sm opacity-70 mb-4">
+          <div className="text-sm opacity-70 mb-4 break-all">
             عنوان URL للكتاب: {url}
           </div>
-          <button 
-            onClick={onClose}
-            className="bg-mihrab/80 text-white hover:bg-mihrab px-4 py-2 rounded"
-          >
-            إغلاق
-          </button>
+          <div className="flex justify-center gap-4">
+            <Button 
+              onClick={reloadBook}
+              variant="outline"
+              className="flex items-center gap-1"
+            >
+              <RotateCcw className="h-4 w-4 ml-1" />
+              إعادة تحميل
+            </Button>
+            <Button 
+              onClick={onClose}
+              variant="default"
+              className="bg-mihrab/80 text-white hover:bg-mihrab"
+            >
+              إغلاق
+            </Button>
+          </div>
         </div>
       </div>
     );

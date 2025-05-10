@@ -5,7 +5,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogClose,
-  DialogDescription
+  DialogDescription,
+  DialogTitle
 } from "@/components/ui/dialog";
 import { useEpubReader } from './epub/useEpubReader';
 import EpubControls from './epub/EpubControls';
@@ -37,19 +38,26 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
     exportEpub
   } = useEpubReader({ url, title, isOpen });
   
+  const reloadBook = () => {
+    window.location.reload();
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className={`w-[90vw] max-w-[1000px] h-[80vh] max-h-[800px] p-0 flex flex-col ${isDarkMode ? 'dark' : ''}`} 
+        className={`w-[90vw] max-w-[1000px] h-[85vh] max-h-[800px] p-0 flex flex-col ${isDarkMode ? 'dark' : ''}`} 
         dir="rtl"
       >
         <DialogHeader className="px-0 py-0">
+          <DialogTitle className="sr-only">قارئ الكتب الإلكترونية - {title}</DialogTitle>
           <EpubControls
             title={title}
             isDarkMode={isDarkMode}
             toggleDarkMode={toggleDarkMode}
             changeFontSize={changeFontSize}
             exportEpub={exportEpub}
+            reloadBook={reloadBook}
+            isLoading={isLoading}
           />
           <DialogClose className="absolute top-3 left-3 text-mihrab hover:text-mihrab-dark dark:text-mihrab-cream dark:hover:text-white" />
         </DialogHeader>
@@ -71,13 +79,14 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
           />
           
           {/* شريط التقدم */}
-          {!error && !isLoading && (
+          {!error && (
             <EpubNavigation
               currentPage={currentPage}
               totalPages={totalPages}
               progressPercentage={progressPercentage}
               prevPage={prevPage}
               nextPage={nextPage}
+              isLoading={isLoading}
             />
           )}
         </div>
