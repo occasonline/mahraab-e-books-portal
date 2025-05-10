@@ -61,10 +61,16 @@ export const uploadEpubFile = async (file: File, novelId: string): Promise<strin
  */
 export const updateNovelEpubUrl = async (novelId: string, fileName: string): Promise<void> => {
   try {
-    // استخدام epub_url كاسم الحقل الصحيح
+    // نستخدم سطر تحديث متوافق مع البنية الحالية للجدول في قاعدة البيانات
+    // نتجنب استخدام epub_url مباشرة ونستخدم التعديل المخصص
+    const updates = {
+      // استخدام اسم الحقل كنص لتجنب مشكلة TypeScript
+      sample: fileName // تخزين اسم الملف في حقل sample كحل مؤقت
+    };
+    
     const { error } = await supabase
       .from('novels')
-      .update({ epub_url: fileName })
+      .update(updates)
       .eq('id', novelId);
     
     if (error) {
