@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for date formatting with Arabic numerals and month names
  */
@@ -25,7 +24,7 @@ export const toArabicNumerals = (num: number | string): string => {
   return num.toString().replace(/[0-9]/g, match => arabicNumerals[parseInt(match)]);
 };
 
-// Format date to Arabic style (e.g., ١٠ ماي ٢٠٢٥)
+// Format date to Arabic style with Western numbers (e.g., 10 ماي 2025)
 export const formatArabicDate = (date: Date | string | number): string => {
   if (!date) return '';
   
@@ -36,12 +35,10 @@ export const formatArabicDate = (date: Date | string | number): string => {
   const month = dateObject.toLocaleDateString('en-US', { month: 'long' });
   const year = dateObject.getFullYear();
   
-  // Convert to Arabic format
-  const arabicDay = toArabicNumerals(day);
+  // Convert month to Arabic name but keep Western numerals
   const arabicMonth = arabicMonths[month] || month;
-  const arabicYear = toArabicNumerals(year);
   
-  return `${arabicDay} ${arabicMonth} ${arabicYear}`;
+  return `${day} ${arabicMonth} ${year}`;
 };
 
 // Format date with options and convert to Arabic
