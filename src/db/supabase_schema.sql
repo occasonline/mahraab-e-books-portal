@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS public.novels (
   is_premium BOOLEAN DEFAULT false,
   allow_download BOOLEAN DEFAULT true,
   status TEXT CHECK (status IN ('published', 'draft')) DEFAULT 'draft',
-  sample TEXT
+  sample TEXT,
+  epub_url TEXT
 );
 
 -- إضافة مؤشر للبحث على عنوان الرواية
@@ -88,8 +89,3 @@ USING (
 CREATE POLICY "إعدادات الموقع مسموحة للقراءة العامة" 
 ON public.website_settings FOR SELECT 
 USING (true);
-
--- السماح للمشرفين بالتعديل على كل البيانات (نحتاج إلى تعريف role للمشرفين)
--- ملاحظة: يمكن تعديل هذه القواعد لاحقًا بعد إضافة نظام المستخدمين والأدوار
-
--- ملاحظة: يمكن إضافة المزيد من قواعد الأمن بعد تنفيذ نظام المستخدمين
