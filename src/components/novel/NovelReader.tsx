@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import ReactMarkdown from 'react-markdown';
@@ -146,7 +145,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       }
     } else {
       // خطة بديلة إذا لم يكن عنصر القياس جاهزًا
-      const charsPerPage = 200; // تقليل عدد الأحرف للصفحة الواحدة لزيادة عدد الصفحات
+      const charsPerPage = 350; // تقليل عدد الأحرف للصفحة الواحدة لزيادة عدد الصفحات
       
       // تقسيم حسب الفقرات
       const paragraphs = content.split('\n\n');
@@ -175,11 +174,8 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     return pages;
   }, [content, title, fontSize]);
   
-  // معالجة الصفحات للاتجاه RTL
-  const pages = useMemo(() => {
-    // استخدام الصفحات كما هي ولكن مع تطبيق أسلوب RTL من خلال CSS
-    return splitContentIntoPages;
-  }, [splitContentIntoPages]);
+  // نستخدم الصفحات مباشرة بدون أي قصّ أو تعديل
+  const pages = splitContentIntoPages;
   
   // سجل عدد الصفحات التي يتم تمريرها إلى HTMLFlipBook للتحقق
   useEffect(() => {
