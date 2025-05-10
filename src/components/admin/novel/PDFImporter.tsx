@@ -64,10 +64,8 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
       
       for (let i = 1; i <= pagesToExtract; i++) {
         const page = await pdfDocument.getPage(i);
-        // Remove the normalizeWhitespace property which is causing the TypeScript error
-        const content = await page.getTextContent({
-          disableCombineTextItems: false
-        });
+        // Remove properties causing TypeScript errors and use only valid properties for getTextContent
+        const content = await page.getTextContent();
         
         const pageText = content.items
           .map((item: any) => item.str)
