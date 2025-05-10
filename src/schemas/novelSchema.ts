@@ -9,6 +9,7 @@ export const novelSchema = z.object({
   fullDescription: z.string().min(50, { message: "يجب أن يحتوي الوصف الكامل على 50 حرف على الأقل" }),
   category: z.string().min(1, { message: "يجب اختيار تصنيف" }),
   imageUrl: z.string().url({ message: "يرجى إدخال رابط صورة صالح" }).or(z.literal("")),
+  coverImage: z.instanceof(File).optional(),
   tags: z.array(z.string()),
   isPremium: z.boolean().default(false),
   allowDownload: z.boolean().default(true),
