@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { getNovelById } from "@/services/novelService";
 import { getEpubDownloadUrl } from "@/services/epubService";
 import { Novel } from "@/types/supabase";
@@ -21,6 +21,7 @@ const NovelDetail = () => {
   const [isReaderOpen, setIsReaderOpen] = useState(false);
   const [isEpubReaderOpen, setIsEpubReaderOpen] = useState(false);
   const [epubUrl, setEpubUrl] = useState<string>('');
+  const [loadingEpub, setLoadingEpub] = useState(false);
   
   // Mock comments for now - could be replaced with real data in future
   const comments = [
@@ -64,13 +65,21 @@ const NovelDetail = () => {
         // تحميل عنوان ملف EPUB إذا كان متاحاً
         if (fetchedNovel?.sample) {
           try {
+            setLoadingEpub(true);
             console.log("جار تحميل EPUB من:", fetchedNovel.sample);
             const url = await getEpubDownloadUrl(fetchedNovel.sample);
             console.log("EPUB URL:", url);
             setEpubUrl(url);
           } catch (epubError) {
             console.error("Error fetching EPUB URL:", epubError);
+            toast({
+              variant: "destructive",
+              title: "خطأ في تحميل الكتاب",
+              description: "حدث خطأ أثناء تحميل الكتاب الإلكتروني. سيتم استخدام نموذج بديل.",
+            });
             setEpubUrl('/sample-book.epub'); // استخدام ملف تجريبي في حالة الخطأ
+          } finally {
+            setLoadingEpub(false);
           }
         } else {
           console.log("Using sample EPUB");
@@ -104,14 +113,19 @@ const NovelDetail = () => {
       if (epubUrl) {
         console.log("Opening EPUB reader with URL:", epubUrl);
         setIsEpubReaderOpen(true);
+        
+        toast({
+          title: "تم فتح الكتاب الإلكتروني",
+          description: `استمتع بقراءة ${novel?.title}!`,
+        });
       } else {
         setIsReaderOpen(true);
+        
+        toast({
+          title: "تم فتح الرواية",
+          description: `استمتع بقراءة ${novel?.title}!`,
+        });
       }
-      
-      toast({
-        title: "تم فتح الرواية",
-        description: `استمتع بقراءة رواية ${novel?.title}!`,
-      });
     }
   };
   

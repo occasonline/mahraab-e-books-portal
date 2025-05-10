@@ -8,8 +8,7 @@ import { supabase } from '@/lib/supabase';
  */
 export const getEpubDownloadUrl = async (fileName: string): Promise<string> => {
   try {
-    // في بيئة الإنتاج، سيتم استخدام هذه الدالة لجلب ملف EPUB من Supabase
-    // حالياً نستخدم ملفاً محلياً للاختبار
+    console.log("جار تحميل EPUB من:", fileName);
     
     // للاختبار، نتحقق إذا كان الملف المطلوب هو القيمة الافتراضية
     if (!fileName || fileName === 'default' || fileName === 'sample') {
@@ -17,7 +16,52 @@ export const getEpubDownloadUrl = async (fileName: string): Promise<string> => {
       return '/sample-book.epub';
     }
     
-    // استرجاع رابط مؤقت من Supabase Storage
+    // تحقق مما إذا كان الملف هو عبارة عن URL كامل من Supabase
+    if (fileName.includes('supabase.co/storage') || fileName.startsWith('http')) {
+      // الرابط هو بالفعل URL كامل، قم بإزالة معلمات التوقيع إذا كانت موجودة
+      const urlParts = fileName.split('?');
+      const baseUrl = urlParts[0];
+      
+      // محاولة إنشاء رابط مؤقت جديد
+      try {
+        // استخراج مسار الملف من URL
+        const storageUrl = new URL(baseUrl);
+        const pathParts = storageUrl.pathname.split('/');
+        const bucketName = pathParts[2]; // e.g. 'novels'
+        
+        // إزالة '/storage/v1/object/sign/' و اسم الدلو من المسار
+        const objectPathParts = pathParts.slice(3);
+        let objectPath = objectPathParts.join('/');
+        
+        // إذا كان المسار يبدأ بـ 'public/' أو 'sign/', قم بإزالته
+        if (objectPath.startsWith('public/')) {
+          objectPath = objectPath.substring(7);
+        } else if (objectPath.startsWith('sign/')) {
+          objectPath = objectPath.substring(5);
+        }
+        
+        console.log("محاولة إنشاء رابط تنزيل جديد:", bucketName, objectPath);
+        
+        // إنشاء رابط موقّع جديد
+        const { data, error } = await supabase.storage
+          .from(bucketName)
+          .createSignedUrl(objectPath, 3600);
+        
+        if (error) {
+          console.error("فشل في إنشاء رابط موقّع للملف:", error.message);
+          throw error;
+        }
+        
+        return data.signedUrl;
+      } catch (urlError) {
+        console.error("خطأ في معالجة URL:", urlError);
+        console.log("استخدام الرابط الأصلي:", baseUrl);
+        // إرجاع الرابط الأصلي بدون معلمات التوقيع
+        return baseUrl;
+      }
+    }
+    
+    // رفع ملف إلى دلو التخزين 
     const { data, error } = await supabase.storage
       .from('novels')
       .createSignedUrl(`epub/${fileName}`, 3600);
@@ -27,7 +71,7 @@ export const getEpubDownloadUrl = async (fileName: string): Promise<string> => {
       return '/sample-book.epub'; // ارجاع ملف افتراضي في حالة الخطأ
     }
     
-    console.log('تم إنشاء رابط التحميل بنجاح:', data?.signedUrl);
+    console.log("تم إنشاء رابط التحميل بنجاح:", data?.signedUrl);
     return data?.signedUrl || '/sample-book.epub';
     
   } catch (error) {

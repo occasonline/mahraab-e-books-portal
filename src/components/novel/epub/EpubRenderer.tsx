@@ -51,7 +51,7 @@ const EpubRenderer: React.FC<EpubRendererProps> = ({
           <p className="text-mihrab-dark dark:text-mihrab-cream mb-4">
             لم نتمكن من عرض الكتاب الإلكتروني. يرجى التحقق من صحة الملف أو تحميله مرة أخرى.
           </p>
-          <div className="text-sm opacity-70 mb-4 break-all">
+          <div className="text-sm opacity-70 mb-4 break-all max-h-24 overflow-auto">
             عنوان URL للكتاب: {url}
           </div>
           <div className="flex justify-center gap-4">

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -42,6 +42,17 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
     window.location.reload();
   };
   
+  // تحسين تجربة المستخدم - إغلاق القارئ تلقائياً إذا كان الخطأ شديداً
+  useEffect(() => {
+    if (error && error.includes("فشل في تحميل الكتاب الإلكتروني")) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 10000); // إغلاق بعد 10 ثوانٍ
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, onClose]);
+  
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
@@ -63,7 +74,7 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
         </DialogHeader>
         
         <DialogDescription className="text-center text-xs pt-0 mt-0 dark:text-mihrab-cream/70">
-          استخدم الأزرار أسفل الكتاب أو انقر على جانبي الصفحة للتنقل بين الصفحات
+          {isLoading ? 'جاري تحميل الكتاب، يرجى الانتظار...' : 'استخدم الأزرار أسفل الكتاب أو انقر على جانبي الصفحة للتنقل بين الصفحات'}
         </DialogDescription>
         
         <div className="flex-1 relative overflow-hidden bg-mihrab-beige/30 dark:bg-mihrab-dark/60">

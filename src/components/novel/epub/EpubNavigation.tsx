@@ -22,7 +22,26 @@ const EpubNavigation: React.FC<EpubNavigationProps> = ({
   isLoading = false
 }) => {
   if (isLoading) {
-    return null;
+    return (
+      <div className="absolute bottom-4 left-0 right-0 px-8">
+        <div className="bg-white/90 dark:bg-mihrab-dark/90 rounded-full py-3 px-5 shadow-md">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm text-mihrab-dark/70 dark:text-mihrab-cream/70">
+              جاري التحميل...
+            </div>
+            
+            <div className="text-sm font-medium text-mihrab-dark dark:text-mihrab-cream">
+              تحضير الكتاب
+            </div>
+          </div>
+          
+          <Progress 
+            value={20} 
+            className="h-2 dark:bg-mihrab-dark animate-pulse" 
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
