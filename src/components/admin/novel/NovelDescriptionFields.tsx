@@ -20,12 +20,11 @@ const NovelDescriptionFields = ({ form }: NovelDescriptionFieldsProps) => {
             <FormControl>
               <Textarea 
                 placeholder="أدخل وصفًا مختصرًا للرواية (يظهر في القوائم والبطاقات)" 
-                className="min-h-[80px] text-right font-sans" 
-                dir="rtl"
+                className="min-h-[80px] font-amiri" 
                 {...field} 
               />
             </FormControl>
-            <FormDescription className="text-right font-sans">
+            <FormDescription className="text-right font-amiri">
               هذا الوصف يظهر في القوائم وبطاقات الروايات. يُفضل أن يكون موجزًا.
             </FormDescription>
             <FormMessage />
@@ -42,12 +41,11 @@ const NovelDescriptionFields = ({ form }: NovelDescriptionFieldsProps) => {
             <FormControl>
               <Textarea 
                 placeholder="أدخل وصفًا تفصيليًا للرواية" 
-                className="min-h-[150px] text-right font-sans" 
-                dir="rtl"
+                className="min-h-[150px] font-amiri" 
                 {...field} 
               />
             </FormControl>
-            <FormDescription className="text-right font-sans">
+            <FormDescription className="text-right font-amiri">
               هذا الوصف يظهر في صفحة تفاصيل الرواية. يمكن أن يكون مفصلاً.
             </FormDescription>
             <FormMessage />
