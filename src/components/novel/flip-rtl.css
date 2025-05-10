@@ -1,0 +1,37 @@
+
+/* ملف CSS خاص بدعم اتجاه RTL للقارئ */
+.book-rtl .page-container {
+  transform: scaleX(-1);
+}
+
+.book-rtl .page {
+  transform: scaleX(-1); /* يعيد النص لوضعه الصحيح */
+}
+
+/* تعديلات على أزرار الانتقال */
+.flip-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.flip-btn:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.flip-btn-right {
+  right: 1rem;
+}
+
+.flip-btn-left {
+  left: 1rem;
+}

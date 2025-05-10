@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { Button } from "@/components/ui/button";
@@ -23,6 +22,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import './flip-rtl.css'; // استيراد ملف CSS الخاص بالـRTL
 
 interface NovelReaderProps {
   title: string;
@@ -75,39 +75,39 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [fontSize, setFontSize] = useState<string>("text-lg"); // Default font size
+  const [fontSize, setFontSize] = useState<string>("text-lg"); // حجم الخط الافتراضي
   const bookRef = useRef(null);
   
-  // Split content into chunks for pages with improved algorithm using useMemo
+  // تقسيم المحتوى إلى صفحات مع تحسين الخوارزمية باستخدام useMemo
   const splitContentIntoPages = useMemo(() => {
     if (!content) return [];
     
-    const charsPerPage = 350; // Reduced for better Arabic text display
+    const charsPerPage = 350; // تخفيض للنص العربي لعرض أفضل
     const pages = [];
     
-    // Title page
+    // صفحة العنوان
     pages.push(title);
     
-    // Split by paragraphs first
+    // تقسيم حسب الفقرات أولاً
     const paragraphs = content.split('\n\n');
     let currentPageContent = '';
     
-    // Group paragraphs into pages
+    // تجميع الفقرات في صفحات
     for (let i = 0; i < paragraphs.length; i++) {
       const paragraph = paragraphs[i].trim();
       if (!paragraph) continue;
       
       if ((currentPageContent.length + paragraph.length) > charsPerPage && currentPageContent.length > 0) {
-        // Current page is full, add it to pages and start a new one
+        // الصفحة الحالية ممتلئة، أضفها إلى الصفحات وابدأ صفحة جديدة
         pages.push(currentPageContent.trim());
         currentPageContent = paragraph;
       } else {
-        // Add paragraph to current page
+        // أضف الفقرة إلى الصفحة الحالية
         currentPageContent += (currentPageContent ? '\n\n' : '') + paragraph;
       }
     }
     
-    // Add the last page if not empty
+    // أضف الصفحة الأخيرة إذا لم تكن فارغة
     if (currentPageContent.trim()) {
       pages.push(currentPageContent.trim());
     }
@@ -115,20 +115,22 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     return pages;
   }, [content, title]);
   
-  const pages = splitContentIntoPages;
+  // الصفحات المعكوسة للقراءة RTL - مفتاح الحل A
+  const rtlPages = useMemo(() => [...splitContentIntoPages].reverse(), [splitContentIntoPages]);
+  const pages = rtlPages;
 
-  // Set total pages when component mounts or content changes
+  // ضبط عدد الصفحات الإجمالي عند تحميل المكون أو تغيير المحتوى
   useEffect(() => {
     setTotalPages(pages.length);
     
-    // Load saved page from localStorage
+    // تحميل الصفحة المحفوظة من localStorage
     const savedPage = localStorage.getItem(STORAGE_KEY);
     if (savedPage !== null) {
       const pageNum = parseInt(savedPage, 10);
-      // Validate the page number is within bounds
+      // التحقق من أن رقم الصفحة ضمن الحدود
       if (!isNaN(pageNum) && pageNum >= 0 && pageNum < pages.length) {
         setCurrentPage(pageNum);
-        // Flip to the saved page after a slight delay to ensure the book is ready
+        // الانتقال إلى الصفحة المحفوظة بعد تأخير بسيط للتأكد من جاهزية الكتاب
         setTimeout(() => {
           if (bookRef.current) {
             (bookRef.current as any).pageFlip().flip(pageNum);
@@ -137,30 +139,30 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       }
     }
     
-    // Check system preference for dark mode
+    // التحقق من تفضيل النظام للوضع الداكن
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     setIsDarkMode(prefersDark);
     
   }, [pages, STORAGE_KEY]);
 
-  // Handle page changing event
+  // معالجة حدث تغيير الصفحة
   const handlePageChange = (e: any) => {
     const newPage = e.data;
     setCurrentPage(newPage);
-    // Save current page to localStorage
+    // حفظ الصفحة الحالية في localStorage
     localStorage.setItem(STORAGE_KEY, newPage.toString());
   };
 
-  // Navigation functions that respect RTL direction
+  // وظائف التنقل التي تحترم اتجاه RTL - تم تبديل الوظائف كجزء من الحل A
   const nextPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipPrev(); // Reversed for RTL
+      (bookRef.current as any).pageFlip().flipNext(); // عكس الوظائف لدعم RTL
     }
   };
 
   const prevPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipNext(); // Reversed for RTL
+      (bookRef.current as any).pageFlip().flipPrev(); // عكس الوظائف لدعم RTL
     }
   };
 
@@ -170,14 +172,14 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     }
   };
 
-  // Toggle dark mode function
+  // وظيفة تبديل الوضع الداكن
   const toggleDarkMode = () => {
     setIsDarkMode(prev => !prev);
   };
   
-  // Toggle font size function
+  // وظيفة تبديل حجم الخط
   const toggleFontSize = () => {
-    // Cycle through font sizes
+    // التنقل بين أحجام الخطوط
     setFontSize(current => {
       if (current === "text-lg") return "text-xl";
       if (current === "text-xl") return "text-2xl";
@@ -185,12 +187,12 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     });
   };
 
-  // Calculate reading progress percentage
+  // حساب النسبة المئوية لتقدم القراءة
   const progressPercentage = totalPages > 1 
     ? Math.round((currentPage / (totalPages - 1)) * 100)
     : 0;
 
-  // Export functions
+  // وظائف التصدير
   const exportToWord = () => {
     // Create Blob with HTML content properly formatted for Word
     const htmlContent = `
@@ -306,12 +308,12 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     URL.revokeObjectURL(url);
   };
 
-  // Generate pagination items
+  // إنشاء عناصر الترقيم
   const renderPagination = () => {
     const items = [];
     const maxDisplayedPages = 7;
     
-    // Always show first page
+    // أضف الصفحة الأولى
     items.push(
       <PaginationItem key="first">
         <PaginationLink 
@@ -323,7 +325,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       </PaginationItem>
     );
     
-    // Show ellipsis if needed
+    // إذا كان رقم الصفحة أكبر من 3، أضف علامة الترقيم
     if (currentPage > 3) {
       items.push(
         <PaginationItem key="ellipsis1">
@@ -332,12 +334,12 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       );
     }
     
-    // Show pages around current page
+    // أضف الصفحات المحيطة بالصفحة الحالية
     const start = Math.max(1, currentPage - 1);
     const end = Math.min(totalPages - 1, currentPage + 3);
     
     for (let i = start; i < end; i++) {
-      if (i === 0) continue; // Skip first page as it's already added
+      if (i === 0) continue; // أغلب الصفحة الأولى مسبوقة بالعلامة الترقيم
       items.push(
         <PaginationItem key={i}>
           <PaginationLink 
@@ -350,7 +352,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       );
     }
     
-    // Show ellipsis if needed
+    // إذا كان رقم الصفحة أكبر من 3، أضف علامة الترقيم
     if (end < totalPages - 1) {
       items.push(
         <PaginationItem key="ellipsis2">
@@ -359,7 +361,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       );
     }
     
-    // Show last page if not already included
+    // إذا لم تكن الصفحة الأخيرة مضافرة، أضفها
     if (totalPages > 1 && end !== totalPages - 1) {
       items.push(
         <PaginationItem key="last">
@@ -374,6 +376,11 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     }
     
     return items;
+  };
+
+  // الحصول على رقم الصفحة الحقيقي (معكوس)
+  const getRealPageNumber = (index: number) => {
+    return totalPages - index;
   };
 
   return (
@@ -428,7 +435,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
         
         <div className="flex-1 relative overflow-hidden bg-mihrab-beige/30 dark:bg-mihrab-dark/60">
           <div dir="rtl" className="absolute inset-0 flex justify-center items-center">
-            <div className="w-full h-full max-w-[900px] max-h-[700px]">
+            <div className="w-full h-full max-w-[900px] max-h-[700px] book-rtl">
               <HTMLFlipBook
                 ref={bookRef}
                 width={450}
@@ -458,18 +465,40 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 renderOnlyPageLengthChange={false}
               >
                 {pages.map((pageContent, index) => (
-                  <Page key={index} content={pageContent} pageNumber={index} fontSize={fontSize} />
+                  <Page 
+                    key={index} 
+                    content={pageContent} 
+                    pageNumber={getRealPageNumber(index)} 
+                    fontSize={fontSize} 
+                  />
                 ))}
               </HTMLFlipBook>
             </div>
           </div>
           
+          {/* أزرار التنقل على جانبي الكتاب */}
+          <button 
+            onClick={prevPage} 
+            className="flip-btn flip-btn-right dark:bg-mihrab-dark/50 dark:hover:bg-mihrab-dark/70"
+            aria-label="الصفحة التالية"
+          >
+            <ChevronLeft className="h-6 w-6 text-mihrab dark:text-mihrab-cream" />
+          </button>
+          
+          <button 
+            onClick={nextPage} 
+            className="flip-btn flip-btn-left dark:bg-mihrab-dark/50 dark:hover:bg-mihrab-dark/70"
+            aria-label="الصفحة السابقة"
+          >
+            <ChevronRight className="h-6 w-6 text-mihrab dark:text-mihrab-cream" />
+          </button>
+          
           <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-4">
             <div className="text-mihrab-dark bg-white/80 px-3 py-1 rounded-full text-sm dark:bg-mihrab-dark/80 dark:text-white">
-              الصفحة {currentPage + 1} من {totalPages}
+              الصفحة {getRealPageNumber(currentPage)} من {totalPages}
             </div>
             
-            {/* Progress bar */}
+            {/* شريط التقدم */}
             <div className="w-64 mx-auto px-4">
               <Progress 
                 value={progressPercentage} 
@@ -484,7 +513,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious 
-                    onClick={prevPage} 
+                    onClick={nextPage}  {/* عكس العملية للتوافق مع RTL */}
                     className="flex flex-row-reverse"
                     aria-label="الصفحة التالية"
                   />
@@ -494,7 +523,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 
                 <PaginationItem>
                   <PaginationNext 
-                    onClick={nextPage} 
+                    onClick={prevPage}  {/* عكس العملية للتوافق مع RTL */}
                     className="flex flex-row-reverse"
                     aria-label="الصفحة السابقة"
                   />
@@ -504,7 +533,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
             
             <div className="flex justify-center gap-8">
               <Button 
-                onClick={nextPage}
+                onClick={prevPage}  {/* عكس العملية للتوافق مع RTL */}
                 variant="outline" 
                 className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
                 disabled={currentPage === 0}
@@ -513,7 +542,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 الصفحة السابقة
               </Button>
               <Button 
-                onClick={prevPage}
+                onClick={nextPage}  {/* عكس العملية للتوافق مع RTL */}
                 variant="outline" 
                 className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
                 disabled={currentPage === pages.length - 1}
