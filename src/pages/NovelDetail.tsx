@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
@@ -7,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { getNovelById } from "@/services/novelService";
 import { Novel } from "@/types/supabase";
-import { formatArabicDate } from '@/lib/dateUtils';
+import { formatArabicDate, toArabicNumerals, formatArabicRating } from '@/lib/dateUtils';
 
 const NovelDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -169,7 +168,9 @@ const NovelDetail = () => {
                 <p className="text-mihrab-dark/70 mb-4 text-right">تأليف: {novel.author}</p>
                 
                 <div className="flex items-center mb-4 justify-end">
-                  <span className="ml-2 text-mihrab-dark/70">4.5/5 ({comments.length} تقييمات)</span>
+                  <span className="ml-2 text-mihrab-dark/70">
+                    {formatArabicRating(4.5)} ({toArabicNumerals(comments.length)} تقييمات)
+                  </span>
                   {renderStars(4.5)}
                 </div>
                 
@@ -207,7 +208,7 @@ const NovelDetail = () => {
                   </div>
                   <div className="bg-mihrab-beige bg-opacity-30 p-3 rounded text-center">
                     <p className="text-xs text-mihrab-dark/70">التقييم</p>
-                    <p className="font-bold text-mihrab-dark">٤.٥/٥</p>
+                    <p className="font-bold text-mihrab-dark">{formatArabicRating(4.5)}</p>
                   </div>
                 </div>
                 
@@ -273,7 +274,7 @@ const NovelDetail = () => {
                       </svg>
                     </button>
                     <span className="text-sm text-mihrab-dark">
-                      حجم الخط: {readerSettings.fontSize}
+                      حجم الخط: {toArabicNumerals(readerSettings.fontSize)}
                     </span>
                     <button 
                       onClick={() => setReaderSettings({...readerSettings, fontSize: readerSettings.fontSize + 1})}

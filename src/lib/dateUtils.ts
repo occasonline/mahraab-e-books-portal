@@ -65,3 +65,8 @@ export const formatArabicDateWithOptions = (
     return '';
   }
 };
+
+// Format rating to Arabic numerals
+export const formatArabicRating = (rating: number): string => {
+  return `${toArabicNumerals(rating.toString())}/${toArabicNumerals('5')}`;
+};

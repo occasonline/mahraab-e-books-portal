@@ -2,7 +2,7 @@
 import { NovelFormValues } from "@/schemas/novelSchema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NovelPreviewCard from "./NovelPreviewCard";
-import { formatArabicDate } from "@/lib/dateUtils";
+import { formatArabicDate, toArabicNumerals, formatArabicRating } from "@/lib/dateUtils";
 
 interface NovelPreviewProps {
   data: Partial<NovelFormValues>;
@@ -91,7 +91,7 @@ const NovelPreview = ({ data }: NovelPreviewProps) => {
                 
                 <div className="flex items-center mb-4">
                   {renderStars()}
-                  <span className="mr-2 text-mihrab-dark/70">٤.٥/٥ (٣ تقييمات)</span>
+                  <span className="mr-2 text-mihrab-dark/70">{formatArabicRating(4.5)} ({toArabicNumerals(3)} تقييمات)</span>
                 </div>
                 
                 {renderTags()}
