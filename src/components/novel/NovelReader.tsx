@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
+  DialogDescription
 } from "@/components/ui/dialog";
 import { ChevronRight, ChevronLeft, Download } from "lucide-react"; 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -36,11 +37,20 @@ const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: num
           <h2 className="text-3xl font-heading font-bold text-mihrab mb-4 text-center">
             {props.content}
           </h2>
-          <p className="text-mihrab-dark/70">انقر على حافة الصفحة للتنقل</p>
+          <p className="text-mihrab-dark/70 text-center">انقر على حافة الصفحة للتنقل</p>
         </div>
       ) : (
-        <div className="h-full overflow-auto text-right p-4" dir="rtl">
-          <p className="text-mihrab-dark leading-relaxed whitespace-pre-line">
+        <div 
+          className="h-full overflow-auto text-right p-4" 
+          dir="rtl"
+          lang="ar"
+          style={{
+            fontFeatureSettings: "'kern', 'liga', 'calt', 'rlig'",
+            textRendering: "optimizeLegibility",
+            fontFamily: "Amiri, serif"
+          }}
+        >
+          <p className="text-mihrab-dark leading-relaxed whitespace-pre-line font-amiri">
             {props.content}
           </p>
           <div className="text-center mt-4 text-mihrab-dark/50">
@@ -58,61 +68,55 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   const [currentPage, setCurrentPage] = useState(0);
   const bookRef = useRef(null);
   
-  // Split content into chunks for pages, but reverse the array for RTL reading
+  // Split content into chunks for pages
   const splitContentIntoPages = (text: string): string[] => {
     if (!text) return [];
     
-    const charsPerPage = 1000;
+    const charsPerPage = 800; // Reduced characters per page for better readability
     const pages = [];
     
     // Title page
     pages.push(title);
     
-    // Content pages
-    let remainingText = text;
-    while (remainingText.length > 0) {
-      // Try to find a good break point (period, paragraph)
-      let breakPoint = charsPerPage;
-      if (remainingText.length > charsPerPage) {
-        // Look for paragraph break
-        const paragraphBreak = remainingText.indexOf('\n\n', charsPerPage - 200);
-        if (paragraphBreak > 0 && paragraphBreak < charsPerPage + 200) {
-          breakPoint = paragraphBreak;
-        } else {
-          // Look for sentence break
-          const sentenceBreak = remainingText.indexOf('. ', charsPerPage - 200);
-          if (sentenceBreak > 0 && sentenceBreak < charsPerPage + 200) {
-            breakPoint = sentenceBreak + 1;
-          }
-        }
-      } else {
-        breakPoint = remainingText.length;
-      }
+    // Split by paragraphs first
+    const paragraphs = text.split('\n\n');
+    let currentPageContent = '';
+    
+    // Group paragraphs into pages
+    for (let i = 0; i < paragraphs.length; i++) {
+      const paragraph = paragraphs[i].trim();
+      if (!paragraph) continue;
       
-      pages.push(remainingText.substring(0, breakPoint));
-      remainingText = remainingText.substring(breakPoint);
+      if ((currentPageContent + paragraph).length > charsPerPage && currentPageContent.length > 0) {
+        // Current page is full, add it to pages and start a new one
+        pages.push(currentPageContent.trim());
+        currentPageContent = paragraph + '\n\n';
+      } else {
+        // Add paragraph to current page
+        currentPageContent += (currentPageContent ? '\n\n' : '') + paragraph;
+      }
     }
     
-    // Reverse the array for RTL reading (except the title page)
-    const titlePage = pages.shift(); // Remove the title page
-    pages.reverse(); // Reverse the content pages
-    pages.unshift(titlePage!); // Add the title page back at the beginning
+    // Add the last page if not empty
+    if (currentPageContent.trim()) {
+      pages.push(currentPageContent.trim());
+    }
     
     return pages;
   };
   
   const pages = splitContentIntoPages(content);
 
-  // Navigation functions adjusted for RTL reading
+  // Navigation functions
   const nextPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipPrev(); // For RTL reading
+      (bookRef.current as any).pageFlip().flipNext();
     }
   };
 
   const prevPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipNext(); // For RTL reading
+      (bookRef.current as any).pageFlip().flipPrev();
     }
   };
   
@@ -132,11 +136,11 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
         <title>${title}</title>
         <style>
           @font-face {
-            font-family: 'Arabic';
-            src: local('Arial');
+            font-family: 'Amiri';
+            src: url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
           }
           body { 
-            font-family: 'Arabic', 'Arial', sans-serif; 
+            font-family: 'Amiri', 'Arial', sans-serif; 
             text-align: right; 
             direction: rtl; 
             padding: 40px;
@@ -192,11 +196,11 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
             margin: 2cm;
           }
           @font-face {
-            font-family: 'Arabic';
-            src: local('Arial');
+            font-family: 'Amiri';
+            src: url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
           }
           body { 
-            font-family: 'Arabic', 'Arial', sans-serif; 
+            font-family: 'Amiri', 'Arial', sans-serif; 
             text-align: right; 
             direction: rtl; 
             padding: 20px;
@@ -240,7 +244,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="w-[90vw] max-w-[1000px] h-[80vh] max-h-[800px] p-0 flex flex-col">
         <DialogHeader className="px-4 py-2 flex flex-row justify-between items-center">
-          <DialogTitle className="text-mihrab text-xl">{title}</DialogTitle>
+          <DialogTitle className="text-mihrab text-xl font-amiri">{title}</DialogTitle>
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -261,6 +265,10 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
           </div>
         </DialogHeader>
         
+        <DialogDescription className="text-center text-xs pt-0 mt-0">
+          استخدم الأزرار أسفل الكتاب أو انقر على جانبي الصفحة للتنقل بين الصفحات
+        </DialogDescription>
+        
         <div className="flex-1 relative overflow-hidden bg-mihrab-beige/30">
           <div className="absolute inset-0 flex justify-center items-center">
             <div className="w-full h-full max-w-[900px] max-h-[700px]">
@@ -277,7 +285,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 showCover={true}
                 mobileScrollSupport={true}
                 onFlip={handlePageChange}
-                className="book-render flip-book-rtl"
+                className="book-render"
                 startPage={0}
                 style={{ padding: '20px' }}
                 drawShadow={true}
@@ -303,19 +311,19 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
               onClick={prevPage}
               variant="outline" 
               className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
-              disabled={currentPage === pages.length - 1}
+              disabled={currentPage === 0}
             >
-              <ChevronLeft size={16} />
+              <ChevronRight size={16} />
               الصفحة السابقة
             </Button>
             <Button 
               onClick={nextPage}
               variant="outline" 
               className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
-              disabled={currentPage === 0}
+              disabled={currentPage === pages.length - 1}
             >
               الصفحة التالية
-              <ChevronRight size={16} />
+              <ChevronLeft size={16} />
             </Button>
           </div>
         </div>
