@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { getNovelById } from "@/services/novelService";
 import { Novel } from "@/types/supabase";
 import { formatArabicDate } from '@/lib/dateUtils';
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 const NovelDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,6 +47,15 @@ const NovelDetail = () => {
 
     fetchNovel();
   }, [id, navigate, toast]);
+  
+  // معالجة الصورة بشكل أفضل مع حالة خطأ التحميل
+  const getCoverImageUrl = () => {
+    if (novel?.image_url && novel.image_url.trim() !== "") {
+      return novel.image_url;
+    }
+    // استخدام صورة احتياطية
+    return "/placeholder.svg";
+  };
   
   // Mock comments for now - could be replaced with real data in future
   const comments = [
@@ -148,11 +158,19 @@ const NovelDetail = () => {
             <div className="md:flex">
               <div className="md:w-1/3 p-6">
                 <div className="relative aspect-[3/4] max-w-xs mx-auto">
-                  <img 
-                    src={novel.image_url || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"} 
-                    alt={novel.title}
-                    className="w-full h-full object-cover rounded-lg shadow-md"
-                  />
+                  <AspectRatio ratio={3/4}>
+                    <img 
+                      src={getCoverImageUrl()} 
+                      alt={novel.title}
+                      className="w-full h-full object-cover rounded-lg shadow-md"
+                      onError={(e) => {
+                        // If image fails to load, set to placeholder
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null; // Prevent infinite loop
+                        target.src = "/placeholder.svg";
+                      }}
+                    />
+                  </AspectRatio>
                   {novel.is_premium && (
                     <div className="absolute top-4 right-4 bg-mihrab-gold text-white text-xs font-bold px-3 py-1 rounded-full">
                       حصري
@@ -397,6 +415,12 @@ const NovelDetail = () => {
                         src="https://images.unsplash.com/photo-1532012197267-da84d127e765?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
                         alt="طريق المريدين"
                         className="novel-cover"
+                        onError={(e) => {
+                          // If image fails to load, set to placeholder
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null; // Prevent infinite loop
+                          target.src = "/placeholder.svg";
+                        }}
                       />
                     </div>
                     <div className="p-4">
@@ -419,6 +443,12 @@ const NovelDetail = () => {
                         src="https://images.unsplash.com/photo-1476275466078-4007374efbbe?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
                         alt="سراج المعرفة"
                         className="novel-cover"
+                        onError={(e) => {
+                          // If image fails to load, set to placeholder
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null; // Prevent infinite loop
+                          target.src = "/placeholder.svg";
+                        }}
                       />
                     </div>
                     <div className="p-4">
