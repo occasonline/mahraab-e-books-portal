@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import { ChevronRight, ChevronLeft } from "lucide-react"; 
 
 interface NovelReaderProps {
   title: string;
@@ -98,13 +100,13 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   // Navigation functions
   const nextPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipNext();
+      (bookRef.current as any).pageFlip().flipPrev(); // Changed to flipPrev for RTL reading
     }
   };
 
   const prevPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipPrev();
+      (bookRef.current as any).pageFlip().flipNext(); // Changed to flipNext for RTL reading
     }
   };
   
@@ -149,6 +151,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 swipeDistance={0}
                 showPageCorners={true}
                 disableFlipByClick={false}
+                direction="rtl" // Added RTL direction here
               >
                 {pages.map((pageContent, index) => (
                   <Page key={index} content={pageContent} pageNumber={index} />
@@ -161,18 +164,20 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
             <Button 
               onClick={prevPage}
               variant="outline" 
-              className="bg-white/80 border-mihrab text-mihrab"
-              disabled={currentPage === 0}
+              className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
+              disabled={currentPage === pages.length - 1}
             >
+              <ChevronLeft size={16} />
               الصفحة السابقة
             </Button>
             <Button 
               onClick={nextPage}
               variant="outline" 
-              className="bg-white/80 border-mihrab text-mihrab"
-              disabled={currentPage === pages.length - 1}
+              className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
+              disabled={currentPage === 0}
             >
               الصفحة التالية
+              <ChevronRight size={16} />
             </Button>
           </div>
         </div>
