@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import NovelEditor from "@/components/admin/NovelEditor";
 import NovelsList from "@/components/admin/NovelsList";
+import WebsiteSettingsForm from "@/components/admin/WebsiteSettingsForm";
 import { useToast } from "@/components/ui/use-toast";
 
 // مؤقتًا: سنستخدم هذه الدالة للتحقق من المستخدم المسؤول
@@ -112,12 +113,7 @@ const Admin = () => {
               </TabsContent>
               
               <TabsContent value="settings">
-                <div className="text-center py-8">
-                  <h2 className="text-xl font-heading mb-4">إعدادات الموقع</h2>
-                  <p className="text-muted-foreground">
-                    ستتوفر هذه الميزة قريبًا.
-                  </p>
-                </div>
+                <WebsiteSettingsForm />
               </TabsContent>
             </Tabs>
           </div>
