@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 interface NovelDescriptionTabProps {
   fullDescription: string | null;
 }

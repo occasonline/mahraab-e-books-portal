@@ -122,18 +122,40 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
 
   // Export functions
   const exportToWord = () => {
-    // Create a blob with HTML content
+    // Create Blob with HTML content properly formatted for Word
     const htmlContent = `
       <!DOCTYPE html>
       <html dir="rtl">
       <head>
         <meta charset="UTF-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <title>${title}</title>
         <style>
-          body { font-family: 'Arial', sans-serif; text-align: right; direction: rtl; }
-          h1 { color: #7A6C5D; text-align: center; font-size: 24pt; margin-bottom: 50px; }
-          p { line-height: 1.6; font-size: 12pt; }
-          .page-break { page-break-after: always; }
+          @font-face {
+            font-family: 'Arabic';
+            src: local('Arial');
+          }
+          body { 
+            font-family: 'Arabic', 'Arial', sans-serif; 
+            text-align: right; 
+            direction: rtl; 
+            padding: 40px;
+          }
+          h1 { 
+            color: #7A6C5D; 
+            text-align: center; 
+            font-size: 24pt; 
+            margin-bottom: 50px; 
+          }
+          p { 
+            line-height: 1.6; 
+            font-size: 12pt; 
+            text-align: right;
+            direction: rtl;
+          }
+          .page-break { 
+            page-break-after: always; 
+          }
         </style>
       </head>
       <body>
@@ -143,11 +165,12 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       </html>
     `;
     
-    const blob = new Blob([htmlContent], {type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    // Use application/msword for better compatibility
+    const blob = new Blob([htmlContent], {type: 'application/msword'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${title}.docx`;
+    a.download = `${title}.doc`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -155,18 +178,44 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   };
 
   const exportToPDF = () => {
-    // Similar approach but for PDF
+    // Create a properly formatted HTML for PDF with RTL support
     const htmlContent = `
       <!DOCTYPE html>
       <html dir="rtl">
       <head>
         <meta charset="UTF-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <title>${title}</title>
         <style>
-          body { font-family: 'Arial', sans-serif; text-align: right; direction: rtl; }
-          h1 { color: #7A6C5D; text-align: center; font-size: 24pt; margin-bottom: 50px; }
-          p { line-height: 1.6; font-size: 12pt; }
-          .page-break { page-break-after: always; }
+          @page {
+            size: A4;
+            margin: 2cm;
+          }
+          @font-face {
+            font-family: 'Arabic';
+            src: local('Arial');
+          }
+          body { 
+            font-family: 'Arabic', 'Arial', sans-serif; 
+            text-align: right; 
+            direction: rtl; 
+            padding: 20px;
+          }
+          h1 { 
+            color: #7A6C5D; 
+            text-align: center; 
+            font-size: 24pt; 
+            margin-bottom: 50px; 
+          }
+          p { 
+            line-height: 1.6; 
+            font-size: 12pt; 
+            text-align: right;
+            direction: rtl;
+          }
+          .page-break { 
+            page-break-after: always; 
+          }
         </style>
       </head>
       <body>

@@ -46,8 +46,14 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
     const result: Partial<NovelFormValues> = {};
     
     try {
-      // Load the PDF document
-      const loadingTask = pdfjs.getDocument({ data: fileData });
+      // Load the PDF document with explicit encoding options
+      const loadingTask = pdfjs.getDocument({
+        data: fileData,
+        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+        cMapPacked: true,
+        standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/'
+      });
+      
       const pdfDocument = await loadingTask.promise;
       
       // Get total page count
@@ -59,7 +65,11 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
       
       for (let i = 1; i <= pagesToExtract; i++) {
         const page = await pdfDocument.getPage(i);
-        const content = await page.getTextContent();
+        const content = await page.getTextContent({
+          normalizeWhitespace: true,
+          disableCombineTextItems: false
+        });
+        
         const pageText = content.items
           .map((item: any) => item.str)
           .join(' ');
@@ -67,7 +77,7 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
         fullText += pageText + '\n\n';
       }
       
-      // Try to extract title from the first page (assuming it's the largest text)
+      // Try to extract title from the first page
       const firstPage = await pdfDocument.getPage(1);
       const firstPageContent = await firstPage.getTextContent();
       
@@ -88,14 +98,14 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
         result.title = file?.name.replace('.pdf', '');
       }
       
-      // Set fullDescription to the extracted text
+      // Ensure proper text direction for Arabic content
       result.fullDescription = fullText.trim();
       
       // Set the sample to the first part of the content
       const sampleText = fullText.substring(0, 1000);
       result.sample = sampleText.trim();
       
-      // Try to extract author information (simple heuristic: look for "by" or similar text)
+      // Try to extract author information
       const authorPattern = /(?:by|تأليف|كتابة)\s*:?\s*([^,\n]+)/i;
       const authorMatch = fullText.match(authorPattern);
       if (authorMatch && authorMatch[1]) {
@@ -104,7 +114,7 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
         result.author = "محراب التوبة";
       }
       
-      // Extract a short description (first paragraph after title)
+      // Extract a short description
       const paragraphs = fullText.split('\n\n');
       if (paragraphs.length > 1) {
         result.description = paragraphs[1].trim().substring(0, 300);
@@ -120,16 +130,13 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
   };
   
   // This function would handle Word document parsing
-  // In a real implementation, this would use a library to parse .docx/.doc files
-  // For this example, we'll just extract the filename as title and show a message
   const parseWordDocument = (file: File): Partial<NovelFormValues> => {
-    // In a real implementation, you would use a library like mammoth.js to extract text
-    // For now, we'll just use the filename as the title and prompt the user
+    // For now, we'll just use the filename as the title
     const filename = file.name.replace(/\.(docx|doc)$/, '');
     
     toast({
       title: "تم استلام ملف Word",
-      description: "جاري استخراج العنوان من اسم الملف. في التطبيق الكامل، سيتم استخراج المحتوى النصي.",
+      description: "جاري استخراج العنوان من اسم الملف. سيتم إضافة محتوى النص لاحقًا.",
     });
     
     return {

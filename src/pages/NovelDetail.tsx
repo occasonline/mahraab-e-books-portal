@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
@@ -8,6 +7,7 @@ import { getNovelById } from "@/services/novelService";
 import { Novel } from "@/types/supabase";
 import NovelHeader from '@/components/novel/NovelHeader';
 import NovelContentTabs from '@/components/novel/NovelContentTabs';
+import NovelReader from '@/components/novel/NovelReader';
 
 const NovelDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +15,7 @@ const NovelDetail = () => {
   const navigate = useNavigate();
   const [novel, setNovel] = useState<Novel | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isReaderOpen, setIsReaderOpen] = useState(false);
   
   // Mock comments for now - could be replaced with real data in future
   const comments = [
@@ -74,6 +75,7 @@ const NovelDetail = () => {
         description: "يرجى الترقية إلى العضوية المدفوعة للوصول إلى هذه الرواية.",
       });
     } else {
+      setIsReaderOpen(true);
       toast({
         title: "تم فتح الرواية",
         description: `استمتع بقراءة رواية ${novel?.title}!`,
@@ -132,6 +134,14 @@ const NovelDetail = () => {
             novel={novel}
             comments={comments}
             onStartReading={handleStartReading}
+          />
+          
+          {/* Full Novel Reader Component */}
+          <NovelReader 
+            title={novel.title}
+            content={novel.full_description || novel.sample || ''}
+            isOpen={isReaderOpen}
+            onClose={() => setIsReaderOpen(false)}
           />
         </div>
       </div>
