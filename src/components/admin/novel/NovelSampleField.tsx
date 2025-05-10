@@ -18,13 +18,15 @@ const NovelSampleField = ({ form }: NovelSampleFieldProps) => {
           <FormLabel>نموذج القراءة</FormLabel>
           <FormControl>
             <Textarea 
-              placeholder="أدخل نموذجًا للقراءة (مقدمة الرواية أو مقتطف منها)" 
-              className="min-h-[150px]" 
+              placeholder="أدخل نموذجًا للقراءة (يمكن للقراء الاطلاع عليه قبل الشراء)" 
+              className="min-h-[200px] text-right"
+              dir="rtl"
               {...field} 
             />
           </FormControl>
-          <FormDescription>
-            هذا النموذج سيظهر للقراء في قسم "نموذج القراءة" في صفحة الرواية.
+          <FormDescription className="text-right">
+            هذا النموذج سيكون متاحًا للقراءة مجانًا للجميع، وهو مهم للروايات الحصرية.
+            يُفضل أن يكون النموذج بحجم مناسب (500-1000 كلمة) لجذب انتباه القارئ.
           </FormDescription>
           <FormMessage />
         </FormItem>
