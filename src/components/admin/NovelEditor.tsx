@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,7 +33,6 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
   const [showMarkdownImporter, setShowMarkdownImporter] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const supabaseConnected = isSupabaseConfigured();
   
   // تهيئة نموذج التحرير
   const form = useForm<NovelFormValues>({
@@ -58,7 +56,7 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
   useEffect(() => {
     const fetchNovelData = async () => {
       if (novelId && novelId !== "new") {
-        if (!supabaseConnected) {
+        if (!isSupabaseConfigured()) {
           toast({
             variant: "destructive",
             title: "خطأ في الاتصال بقاعدة البيانات",
@@ -99,11 +97,11 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
     };
 
     fetchNovelData();
-  }, [novelId, form, toast, supabaseConnected]);
+  }, [novelId, form, toast]);
 
   const onSubmit = async (data: NovelFormValues) => {
     // التحقق من اتصال Supabase قبل محاولة الحفظ
-    if (!supabaseConnected) {
+    if (!isSupabaseConfigured()) {
       toast({
         variant: "destructive",
         title: "خطأ في حفظ البيانات",
@@ -157,6 +155,8 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
     return <div className="py-8 text-center">جاري تحميل البيانات...</div>;
   }
 
+  const supabaseConnected = isSupabaseConfigured();
+
   return (
     <div className="space-y-6">
       {!supabaseConnected && (
@@ -164,7 +164,7 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>تنبيه: لا يوجد اتصال بقاعدة البيانات</AlertTitle>
           <AlertDescription>
-            لم يتم العثور على إعدادات الاتصال بـ Supabase. يرجى التأكد من تفعيل اتصال Supabase من لوحة التحكم.
+            تم اكتشاف مشكلة في الاتصال بـ Supabase. يرجى التأكد من إكمال خطوات الربط من خلال الزر الأخضر Supabase في الأعلى.
             لن تتمكن من حفظ البيانات حتى يتم تكوين الاتصال بشكل صحيح.
           </AlertDescription>
         </Alert>
