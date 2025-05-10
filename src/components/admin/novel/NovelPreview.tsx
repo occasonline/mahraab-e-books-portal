@@ -3,16 +3,29 @@ import { NovelFormValues } from "@/schemas/novelSchema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NovelPreviewCard from "./NovelPreviewCard";
 import { formatArabicDate } from "@/lib/dateUtils";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface NovelPreviewProps {
   data: Partial<NovelFormValues>;
 }
 
 const NovelPreview = ({ data }: NovelPreviewProps) => {
-  // Create a preview URL for uploaded files
-  const coverImageUrl = data.coverImage
-    ? URL.createObjectURL(data.coverImage)
-    : data.imageUrl || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+  // Create a preview URL for uploaded files with better fallback handling
+  const getCoverImageUrl = () => {
+    if (data.coverImage) {
+      return URL.createObjectURL(data.coverImage);
+    }
+    
+    // Check if imageUrl exists and is not empty
+    if (data.imageUrl && data.imageUrl.trim() !== "") {
+      return data.imageUrl;
+    }
+    
+    // Return a default placeholder image as the final fallback
+    return "/placeholder.svg";
+  };
+
+  const coverImageUrl = getCoverImageUrl();
 
   // Format rating as stars
   const renderStars = (rating: number = 4.5) => {
@@ -70,11 +83,19 @@ const NovelPreview = ({ data }: NovelPreviewProps) => {
             <div className="md:flex">
               <div className="md:w-1/3 p-4">
                 <div className="relative aspect-[3/4] max-w-xs mx-auto">
-                  <img 
-                    src={coverImageUrl} 
-                    alt={data.title || "غلاف الرواية"}
-                    className="w-full h-full object-cover rounded-lg shadow-md"
-                  />
+                  <AspectRatio ratio={3/4}>
+                    <img 
+                      src={coverImageUrl} 
+                      alt={data.title || "غلاف الرواية"}
+                      className="w-full h-full object-cover rounded-lg shadow-md"
+                      onError={(e) => {
+                        // If image fails to load, set to placeholder
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null; // Prevent infinite loop
+                        target.src = "/placeholder.svg";
+                      }}
+                    />
+                  </AspectRatio>
                   {data.isPremium && (
                     <div className="absolute top-3 right-3 bg-mihrab-gold text-white text-xs font-bold px-3 py-1 rounded-full">
                       حصري

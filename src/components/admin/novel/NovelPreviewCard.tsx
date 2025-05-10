@@ -3,16 +3,29 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { NovelFormValues } from "@/schemas/novelSchema";
 import { Book, Eye } from "lucide-react";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 
 interface NovelPreviewCardProps {
   novel: Partial<NovelFormValues>;
 }
 
 const NovelPreviewCard = ({ novel }: NovelPreviewCardProps) => {
-  // Create a preview URL for uploaded files
-  const coverImageUrl = novel.coverImage
-    ? URL.createObjectURL(novel.coverImage)
-    : novel.imageUrl || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+  // Create a preview URL for uploaded files with better fallback handling
+  const getCoverImageUrl = () => {
+    if (novel.coverImage) {
+      return URL.createObjectURL(novel.coverImage);
+    }
+    
+    // Check if imageUrl exists and is not empty
+    if (novel.imageUrl && novel.imageUrl.trim() !== "") {
+      return novel.imageUrl;
+    }
+    
+    // Return a default placeholder image as the final fallback
+    return "/placeholder.svg";
+  };
+
+  const coverImageUrl = getCoverImageUrl();
 
   // Format the tags as badges
   const renderTags = () => {
@@ -33,12 +46,20 @@ const NovelPreviewCard = ({ novel }: NovelPreviewCardProps) => {
 
   return (
     <Card className="w-full bg-white overflow-hidden">
-      <div className="aspect-[4/3] w-full overflow-hidden">
-        <img
-          src={coverImageUrl}
-          alt={novel.title || "غلاف الرواية"}
-          className="w-full h-full object-cover hover:scale-105 transition-all duration-300"
-        />
+      <div className="relative aspect-[4/3] w-full overflow-hidden">
+        <AspectRatio ratio={4/3}>
+          <img
+            src={coverImageUrl}
+            alt={novel.title || "غلاف الرواية"}
+            className="w-full h-full object-cover hover:scale-105 transition-all duration-300"
+            onError={(e) => {
+              // If image fails to load, set to placeholder
+              const target = e.target as HTMLImageElement;
+              target.onerror = null; // Prevent infinite loop
+              target.src = "/placeholder.svg";
+            }}
+          />
+        </AspectRatio>
       </div>
       
       <CardHeader className="pb-2">
