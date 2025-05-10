@@ -19,7 +19,7 @@ import NovelTagsField from "./novel/NovelTagsField";
 import NovelSampleField from "./novel/NovelSampleField";
 import NovelSettingsFields from "./novel/NovelSettingsFields";
 import NovelPreview from "./novel/NovelPreview";
-import MarkdownImporter from "./novel/MarkdownImporter";
+import PDFImporter from "./novel/PDFImporter";
 
 interface NovelEditorProps {
   novelId: string | null; // "new" لإضافة رواية جديدة أو معرف الرواية للتعديل
@@ -30,7 +30,7 @@ interface NovelEditorProps {
 const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
   const [showChapterEditor, setShowChapterEditor] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [showMarkdownImporter, setShowMarkdownImporter] = useState(false);
+  const [showPDFImporter, setShowPDFImporter] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
@@ -140,15 +140,15 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
   // Get form data for preview
   const formValues = form.watch();
 
-  // Handle markdown data import
-  const handleMarkdownData = (data: Partial<NovelFormValues>) => {
+  // Handle PDF data import
+  const handlePDFData = (data: Partial<NovelFormValues>) => {
     if (data.title) form.setValue("title", data.title);
     if (data.description) form.setValue("description", data.description);
     if (data.fullDescription) form.setValue("fullDescription", data.fullDescription);
     if (data.author) form.setValue("author", data.author);
     if (data.sample) form.setValue("sample", data.sample);
     
-    setShowMarkdownImporter(false);
+    setShowPDFImporter(false);
   };
 
   if (loading && novelId !== "new") {
@@ -201,10 +201,10 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
             <Button 
               variant="outline" 
               className="mr-2 flex items-center gap-2"
-              onClick={() => setShowMarkdownImporter(prev => !prev)}
+              onClick={() => setShowPDFImporter(prev => !prev)}
             >
               <FileText className="h-4 w-4" />
-              <span>{showMarkdownImporter ? "إخفاء استيراد الملف" : "استيراد من ملف Markdown"}</span>
+              <span>{showPDFImporter ? "إخفاء استيراد الملف" : "استيراد من ملف PDF"}</span>
             </Button>
           )}
         </div>
@@ -212,8 +212,8 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
       
       {showChapterEditor ? (
         <ChapterEditor novelId={novelId!} />
-      ) : showMarkdownImporter ? (
-        <MarkdownImporter onImport={handleMarkdownData} onCancel={() => setShowMarkdownImporter(false)} />
+      ) : showPDFImporter ? (
+        <PDFImporter onImport={handlePDFData} onCancel={() => setShowPDFImporter(false)} />
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
