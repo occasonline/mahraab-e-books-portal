@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { getNovelById } from "@/services/novelService";
 import { Novel } from "@/types/supabase";
-import { formatArabicDate, toArabicNumerals, formatArabicRating } from '@/lib/dateUtils';
+import { formatArabicDate } from '@/lib/dateUtils';
 
 const NovelDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -169,7 +169,7 @@ const NovelDetail = () => {
                 
                 <div className="flex items-center mb-4 justify-end">
                   <span className="ml-2 text-mihrab-dark/70">
-                    {formatArabicRating(4.5)} ({toArabicNumerals(comments.length)} تقييمات)
+                    4.5/5 ({comments.length} تقييمات)
                   </span>
                   {renderStars(4.5)}
                 </div>
@@ -208,7 +208,7 @@ const NovelDetail = () => {
                   </div>
                   <div className="bg-mihrab-beige bg-opacity-30 p-3 rounded text-center">
                     <p className="text-xs text-mihrab-dark/70">التقييم</p>
-                    <p className="font-bold text-mihrab-dark">{formatArabicRating(4.5)}</p>
+                    <p className="font-bold text-mihrab-dark">4.5/5</p>
                   </div>
                 </div>
                 
@@ -274,7 +274,7 @@ const NovelDetail = () => {
                       </svg>
                     </button>
                     <span className="text-sm text-mihrab-dark">
-                      حجم الخط: {toArabicNumerals(readerSettings.fontSize)}
+                      حجم الخط: {readerSettings.fontSize}
                     </span>
                     <button 
                       onClick={() => setReaderSettings({...readerSettings, fontSize: readerSettings.fontSize + 1})}
