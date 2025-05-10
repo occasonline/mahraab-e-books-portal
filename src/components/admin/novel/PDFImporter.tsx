@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { NovelFormValues } from "@/schemas/novelSchema";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,13 +26,14 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       
-      // Check if it's a PDF or Word file
+      // Check if it's a PDF, Word or Markdown file
       if (!selectedFile.name.toLowerCase().endsWith('.pdf') && 
           !selectedFile.name.toLowerCase().endsWith('.docx') &&
-          !selectedFile.name.toLowerCase().endsWith('.doc')) {
+          !selectedFile.name.toLowerCase().endsWith('.doc') &&
+          !selectedFile.name.toLowerCase().endsWith('.md')) {
         toast({
           title: "خطأ في الملف",
-          description: "يرجى اختيار ملف بصيغة PDF (.pdf) أو Word (.docx, .doc)",
+          description: "يرجى اختيار ملف بصيغة PDF (.pdf) أو Word (.docx, .doc) أو Markdown (.md)",
           variant: "destructive"
         });
         return;
@@ -64,7 +66,7 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
       
       for (let i = 1; i <= pagesToExtract; i++) {
         const page = await pdfDocument.getPage(i);
-        // Remove properties causing TypeScript errors and use only valid properties for getTextContent
+        // Use getTextContent without any additional parameters to avoid TypeScript errors
         const content = await page.getTextContent();
         
         const pageText = content.items
@@ -126,7 +128,45 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
     }
   };
   
-  // This function would handle Word document parsing
+  // Handle parsing Markdown files
+  const parseMarkdown = async (file: File): Promise<Partial<NovelFormValues>> => {
+    try {
+      const text = await file.text();
+      
+      // Extract title (first # heading)
+      const titleMatch = text.match(/^#\s+(.+)$/m);
+      const title = titleMatch ? titleMatch[1].trim() : file.name.replace(/\.md$/, '');
+      
+      // Try to extract author
+      const authorMatch = text.match(/^by|تأليف|كتابة:?\s*(.+)$/m);
+      const author = authorMatch ? authorMatch[1].trim() : "محراب التوبة";
+      
+      // Get full content without the title
+      const fullContent = titleMatch ? 
+        text.replace(/^#\s+.+$/m, '').trim() : 
+        text;
+      
+      // Get first paragraph as description
+      const paragraphs = fullContent.split(/\n\s*\n/);
+      const description = paragraphs[0]?.trim().substring(0, 300) || '';
+      
+      // Get a sample of the content
+      const sample = fullContent.substring(0, 1000);
+      
+      return {
+        title,
+        author,
+        description,
+        fullDescription: fullContent,
+        sample
+      };
+    } catch (error) {
+      console.error("Error parsing Markdown:", error);
+      throw new Error("فشل في معالجة ملف Markdown");
+    }
+  };
+  
+  // This function handles Word document parsing (simplified for now)
   const parseWordDocument = (file: File): Partial<NovelFormValues> => {
     // For now, we'll just use the filename as the title
     const filename = file.name.replace(/\.(docx|doc)$/, '');
@@ -172,13 +212,16 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
       } else if (file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc')) {
         // Handle Word document
         novelData = parseWordDocument(file);
+      } else if (file.name.toLowerCase().endsWith('.md')) {
+        // Handle Markdown file
+        novelData = await parseMarkdown(file);
       } else {
         throw new Error("تنسيق الملف غير مدعوم");
       }
       
       // التأكد من وجود البيانات الأساسية
       if (!novelData.title) {
-        novelData.title = file.name.replace(/\.(pdf|docx|doc)$/, '');
+        novelData.title = file.name.replace(/\.(pdf|docx|doc|md)$/, '');
       }
       
       if (!novelData.author) {
@@ -187,6 +230,10 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
       
       if (!novelData.description) {
         novelData.description = "وصف مختصر للرواية";
+      }
+      
+      if (!novelData.fullDescription) {
+        novelData.fullDescription = "النص الكامل للرواية";
       }
       
       if (!novelData.sample) {
@@ -217,7 +264,7 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
         <div className="text-center mb-6">
           <h3 className="text-lg font-heading font-semibold mb-2">استيراد رواية من ملف</h3>
           <p className="text-muted-foreground text-sm mb-4">
-            قم بتحميل ملف PDF (.pdf) أو Word (.docx, .doc) ليتم استيراد محتوى الرواية تلقائياً
+            قم بتحميل ملف PDF (.pdf) أو Word (.docx, .doc) أو Markdown (.md) ليتم استيراد محتوى الرواية تلقائياً
           </p>
         </div>
         
@@ -236,7 +283,7 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
               <Input
                 id="pdf-file"
                 type="file"
-                accept=".pdf,.docx,.doc"
+                accept=".pdf,.docx,.doc,.md"
                 onChange={handleFileChange}
                 className="cursor-pointer"
               />

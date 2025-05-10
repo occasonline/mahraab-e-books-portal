@@ -149,6 +149,11 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
     if (data.sample) form.setValue("sample", data.sample);
     
     setShowPDFImporter(false);
+    
+    toast({
+      title: "تم استيراد البيانات بنجاح",
+      description: "تم استيراد البيانات من الملف وإضافتها إلى نموذج الرواية",
+    });
   };
 
   if (loading && novelId !== "new") {
@@ -204,7 +209,7 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
               onClick={() => setShowPDFImporter(prev => !prev)}
             >
               <FileText className="h-4 w-4" />
-              <span>{showPDFImporter ? "إخفاء استيراد الملف" : "استيراد من ملف PDF"}</span>
+              <span>{showPDFImporter ? "إخفاء استيراد الملف" : "استيراد من ملف"}</span>
             </Button>
           )}
         </div>
