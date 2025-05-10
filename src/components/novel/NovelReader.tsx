@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import ReactMarkdown from 'react-markdown';
@@ -174,8 +175,11 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     return pages;
   }, [content, title, fontSize]);
   
-  // إصلاح المشكلة: استخدام الصفحات مباشرة بدون عكس أو قصّ
-  const pages = splitContentIntoPages;
+  // معالجة الصفحات للاتجاه RTL
+  const pages = useMemo(() => {
+    // استخدام الصفحات كما هي ولكن مع تطبيق أسلوب RTL من خلال CSS
+    return splitContentIntoPages;
+  }, [splitContentIntoPages]);
   
   // سجل عدد الصفحات التي يتم تمريرها إلى HTMLFlipBook للتحقق
   useEffect(() => {
