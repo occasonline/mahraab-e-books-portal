@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,39 +19,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-
-interface Chapter {
-  id: string;
-  title: string;
-  order: number;
-  content: string;
-  status: "published" | "draft";
-}
-
-// بيانات مؤقتة للفصول - سيتم استبدالها بالبيانات من قاعدة البيانات لاحقًا
-const MOCK_CHAPTERS: Chapter[] = [
-  {
-    id: "ch1",
-    title: "الفصل الأول: الظلام",
-    order: 1,
-    content: "استيقظ «سالم» على صوت المنبه المزعج كعادته كل صباح. لكن هذا الصباح كان مختلفاً. شعر بثقل غريب في صدره، وكأن هناك جبلاً جاثماً عليه...",
-    status: "published"
-  },
-  {
-    id: "ch2",
-    title: "الفصل الثاني: الضوء",
-    order: 2,
-    content: "لم يكن سالم يعلم أن حياته ستتغير بهذه السرعة. مرت أسابيع وهو يتردد على حلقات الذكر في المسجد القديم...",
-    status: "published"
-  },
-  {
-    id: "ch3",
-    title: "الفصل الثالث: الرحلة",
-    order: 3,
-    content: "قرر سالم أن يبدأ رحلته في طلب المعرفة. جمع أغراضه البسيطة وودع عائلته...",
-    status: "draft"
-  },
-];
+import { getChaptersByNovelId, createChapter, updateChapter, deleteChapter, updateChapterStatus } from "@/services/chapterService";
+import { Chapter } from "@/types/supabase";
 
 interface ChapterEditorProps {
   novelId: string;
@@ -59,31 +28,77 @@ interface ChapterEditorProps {
 
 const ChapterEditor = ({ novelId }: ChapterEditorProps) => {
   const { toast } = useToast();
-  const [chapters, setChapters] = useState<Chapter[]>(MOCK_CHAPTERS);
-  const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingChapter, setEditingChapter] = useState<Partial<Chapter> | null>(null);
   const [isNewChapter, setIsNewChapter] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<string | null>(null);
 
-  const handleSaveChapter = () => {
-    if (!editingChapter) return;
+  useEffect(() => {
+    const loadChapters = async () => {
+      try {
+        const chaptersData = await getChaptersByNovelId(novelId);
+        setChapters(chaptersData);
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "خطأ في تحميل البيانات",
+          description: "حدث خطأ أثناء استرجاع الفصول. يرجى المحاولة مرة أخرى.",
+        });
+        console.error("خطأ في تحميل الفصول:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // في النسخة الحقيقية، سنرسل طلب API لحفظ الفصل
-    if (isNewChapter) {
-      setChapters([...chapters, { ...editingChapter, id: `ch${Date.now()}` }]);
-      toast({
-        title: "تمت إضافة الفصل",
-        description: "تم إضافة الفصل الجديد بنجاح",
-      });
-    } else {
-      setChapters(chapters.map(ch => ch.id === editingChapter.id ? editingChapter : ch));
-      toast({
-        title: "تم حفظ الفصل",
-        description: "تم حفظ التغييرات بنجاح",
-      });
-    }
+    loadChapters();
+  }, [novelId, toast]);
+
+  const handleSaveChapter = async () => {
+    if (!editingChapter) return;
     
-    setEditingChapter(null);
-    setIsNewChapter(false);
+    try {
+      if (isNewChapter) {
+        // إنشاء فصل جديد
+        const newChapter = await createChapter({
+          novel_id: novelId,
+          title: editingChapter.title || "",
+          content: editingChapter.content || "",
+          order: editingChapter.order || chapters.length + 1,
+          status: editingChapter.status || "draft"
+        });
+        
+        setChapters([...chapters, newChapter]);
+        toast({
+          title: "تمت إضافة الفصل",
+          description: "تم إضافة الفصل الجديد بنجاح",
+        });
+      } else {
+        // تحديث فصل موجود
+        const updatedChapter = await updateChapter(editingChapter.id!, {
+          title: editingChapter.title || "",
+          content: editingChapter.content || "",
+          status: editingChapter.status as "published" | "draft",
+          order: editingChapter.order || 0
+        });
+        
+        setChapters(chapters.map(ch => ch.id === updatedChapter.id ? updatedChapter : ch));
+        toast({
+          title: "تم حفظ الفصل",
+          description: "تم حفظ التغييرات بنجاح",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في حفظ البيانات",
+        description: "حدث خطأ أثناء محاولة حفظ الفصل. يرجى المحاولة مرة أخرى.",
+      });
+      console.error("خطأ في حفظ الفصل:", error);
+    } finally {
+      setEditingChapter(null);
+      setIsNewChapter(false);
+    }
   };
 
   const handleAddChapter = () => {
@@ -92,7 +107,7 @@ const ChapterEditor = ({ novelId }: ChapterEditorProps) => {
       : 1;
       
     setEditingChapter({
-      id: "new",
+      novel_id: novelId,
       title: `الفصل ${newOrder}: `,
       order: newOrder,
       content: "",
@@ -106,28 +121,45 @@ const ChapterEditor = ({ novelId }: ChapterEditorProps) => {
     setIsNewChapter(false);
   };
 
-  const handleDeleteChapter = (id: string) => {
-    // في النسخة الحقيقية، سنرسل طلب API لحذف الفصل
-    setChapters(chapters.filter(ch => ch.id !== id));
-    setDeleteDialog(null);
-    toast({
-      title: "تم حذف الفصل",
-      description: "تم حذف الفصل بنجاح",
-    });
+  const handleDeleteChapter = async (id: string) => {
+    try {
+      await deleteChapter(id);
+      setChapters(chapters.filter(ch => ch.id !== id));
+      toast({
+        title: "تم حذف الفصل",
+        description: "تم حذف الفصل بنجاح",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في الحذف",
+        description: "حدث خطأ أثناء محاولة حذف الفصل. يرجى المحاولة مرة أخرى.",
+      });
+      console.error("خطأ في حذف الفصل:", error);
+    } finally {
+      setDeleteDialog(null);
+    }
   };
 
-  const handleUpdateStatus = (id: string, newStatus: "published" | "draft") => {
-    // في النسخة الحقيقية، سنرسل طلب API لتحديث حالة الفصل
-    setChapters(chapters.map(ch => 
-      ch.id === id ? { ...ch, status: newStatus } : ch
-    ));
-    toast({
-      title: newStatus === "published" ? "تم نشر الفصل" : "تم تحويل الفصل إلى مسودة",
-      description: "تم تحديث حالة الفصل بنجاح",
-    });
+  const handleUpdateStatus = async (id: string, newStatus: "published" | "draft") => {
+    try {
+      const updatedChapter = await updateChapterStatus(id, newStatus);
+      setChapters(chapters.map(ch => ch.id === id ? updatedChapter : ch));
+      toast({
+        title: newStatus === "published" ? "تم نشر الفصل" : "تم تحويل الفصل إلى مسودة",
+        description: "تم تحديث حالة الفصل بنجاح",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في تغيير الحالة",
+        description: "حدث خطأ أثناء محاولة تغيير حالة الفصل. يرجى المحاولة مرة أخرى.",
+      });
+      console.error("خطأ في تغيير حالة الفصل:", error);
+    }
   };
 
-  const handleMoveChapter = (id: string, direction: "up" | "down") => {
+  const handleMoveChapter = async (id: string, direction: "up" | "down") => {
     const chapterIndex = chapters.findIndex(ch => ch.id === id);
     if (
       (direction === "up" && chapterIndex === 0) || 
@@ -144,11 +176,40 @@ const ChapterEditor = ({ novelId }: ChapterEditorProps) => {
     newChapters[chapterIndex].order = newChapters[otherIndex].order;
     newChapters[otherIndex].order = currentOrder;
     
-    // إعادة ترتيب المصفوفة
-    newChapters.sort((a, b) => a.order - b.order);
-    
-    setChapters(newChapters);
+    try {
+      // تحديث الفصل الأول
+      await updateChapter(newChapters[chapterIndex].id, {
+        title: newChapters[chapterIndex].title,
+        content: newChapters[chapterIndex].content,
+        status: newChapters[chapterIndex].status,
+        order: newChapters[chapterIndex].order
+      });
+      
+      // تحديث الفصل الثاني
+      await updateChapter(newChapters[otherIndex].id, {
+        title: newChapters[otherIndex].title,
+        content: newChapters[otherIndex].content,
+        status: newChapters[otherIndex].status,
+        order: newChapters[otherIndex].order
+      });
+      
+      // إعادة ترتيب المصفوفة
+      newChapters.sort((a, b) => a.order - b.order);
+      setChapters(newChapters);
+      
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في تغيير الترتيب",
+        description: "حدث خطأ أثناء محاولة تغيير ترتيب الفصول. يرجى المحاولة مرة أخرى.",
+      });
+      console.error("خطأ في تغيير ترتيب الفصول:", error);
+    }
   };
+
+  if (loading) {
+    return <div className="py-8 text-center">جاري تحميل البيانات...</div>;
+  }
 
   return (
     <>
@@ -271,7 +332,7 @@ const ChapterEditor = ({ novelId }: ChapterEditorProps) => {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">عنوان الفصل</label>
                   <Input
-                    value={editingChapter.title}
+                    value={editingChapter.title || ""}
                     onChange={(e) =>
                       setEditingChapter({ ...editingChapter, title: e.target.value })
                     }
@@ -282,7 +343,7 @@ const ChapterEditor = ({ novelId }: ChapterEditorProps) => {
                   <label className="text-sm font-medium">الحالة</label>
                   <select
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={editingChapter.status}
+                    value={editingChapter.status || "draft"}
                     onChange={(e) =>
                       setEditingChapter({
                         ...editingChapter,
@@ -300,7 +361,7 @@ const ChapterEditor = ({ novelId }: ChapterEditorProps) => {
                 <label className="text-sm font-medium">محتوى الفصل</label>
                 <Textarea
                   className="min-h-[300px] font-arabic"
-                  value={editingChapter.content}
+                  value={editingChapter.content || ""}
                   onChange={(e) =>
                     setEditingChapter({ ...editingChapter, content: e.target.value })
                   }

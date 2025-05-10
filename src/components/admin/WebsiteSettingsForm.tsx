@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { getWebsiteSettings, updateWebsiteSettings } from "@/services/settingsService";
 import {
   Globe,
   Mail,
@@ -60,6 +60,7 @@ const WebsiteSettingsForm = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("general");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Form definition
   const form = useForm<WebsiteSettingsFormValues>({
@@ -67,13 +68,53 @@ const WebsiteSettingsForm = () => {
     defaultValues: defaultSettings,
   });
 
+  // استرجاع إعدادات الموقع عند تحميل المكون
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settings = await getWebsiteSettings();
+        if (settings) {
+          form.reset({
+            siteName: settings.site_name,
+            siteDescription: settings.site_description,
+            primaryColor: settings.primary_color,
+            secondaryColor: settings.secondary_color,
+            email: settings.email,
+            phone: settings.phone,
+            address: settings.address,
+            facebook: settings.facebook || "",
+            twitter: settings.twitter || "",
+            instagram: settings.instagram || "",
+          });
+        }
+      } catch (error) {
+        console.error("خطأ في استرجاع إعدادات الموقع:", error);
+        // لا نعرض رسالة خطأ هنا لأنه من المحتمل أنها المرة الأولى التي يتم فيها تعيين الإعدادات
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, [form]);
+
   // Form submission handler
   const onSubmit = async (data: WebsiteSettingsFormValues) => {
     setIsSubmitting(true);
     
     try {
-      // In a real application, you would save this data to a database
-      console.log("Saved settings:", data);
+      await updateWebsiteSettings({
+        site_name: data.siteName,
+        site_description: data.siteDescription,
+        primary_color: data.primaryColor,
+        secondary_color: data.secondaryColor,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        facebook: data.facebook,
+        twitter: data.twitter,
+        instagram: data.instagram
+      });
       
       toast({
         title: "تم حفظ الإعدادات",
@@ -85,10 +126,15 @@ const WebsiteSettingsForm = () => {
         title: "خطأ",
         description: "حدث خطأ أثناء حفظ الإعدادات",
       });
+      console.error("خطأ في حفظ إعدادات الموقع:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return <div className="py-8 text-center">جاري تحميل البيانات...</div>;
+  }
 
   return (
     <div className="space-y-6">

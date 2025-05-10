@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import ChapterEditor from "./ChapterEditor";
 import { novelSchema, NovelFormValues } from "@/schemas/novelSchema";
-import { MOCK_NOVEL } from "@/constants/novelData";
-import { FileText, Upload } from "lucide-react";
+import { FileText } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { getNovelById, createNovel, updateNovel } from "@/services/novelService";
 
 // Import the form field components
 import NovelBasicFields from "./novel/NovelBasicFields";
@@ -29,42 +30,91 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
   const [showChapterEditor, setShowChapterEditor] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showMarkdownImporter, setShowMarkdownImporter] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
   
   // تهيئة نموذج التحرير
   const form = useForm<NovelFormValues>({
     resolver: zodResolver(novelSchema),
-    defaultValues: novelId === "new" 
-      ? {
-          title: "",
-          author: "محراب التوبة",
-          description: "",
-          fullDescription: "",
-          category: "",
-          imageUrl: "",
-          tags: [],
-          isPremium: false,
-          allowDownload: true,
-          status: "draft" as const,
-          sample: "",
-        }
-      : MOCK_NOVEL
+    defaultValues: {
+      title: "",
+      author: "محراب التوبة",
+      description: "",
+      fullDescription: "",
+      category: "",
+      imageUrl: "",
+      tags: [],
+      isPremium: false,
+      allowDownload: true,
+      status: "draft" as const,
+      sample: "",
+    }
   });
 
   // استرجاع بيانات الرواية إذا كنا في وضع التعديل
   useEffect(() => {
-    if (novelId && novelId !== "new") {
-      // هنا سيتم استرجاع بيانات الرواية من قاعدة البيانات
-      // لأغراض العرض، سنستخدم البيانات المؤقتة
-      form.reset(MOCK_NOVEL);
-    }
-  }, [novelId, form]);
+    const fetchNovelData = async () => {
+      if (novelId && novelId !== "new") {
+        setLoading(true);
+        try {
+          const novelData = await getNovelById(novelId);
+          
+          // تحويل بنية البيانات من قاعدة البيانات إلى بنية النموذج
+          form.reset({
+            title: novelData.title,
+            author: novelData.author,
+            description: novelData.description,
+            fullDescription: novelData.full_description,
+            category: novelData.category,
+            imageUrl: novelData.image_url,
+            tags: novelData.tags,
+            isPremium: novelData.is_premium,
+            allowDownload: novelData.allow_download,
+            status: novelData.status,
+            sample: novelData.sample,
+          });
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "خطأ في تحميل البيانات",
+            description: "لم نتمكن من استرجاع بيانات الرواية. يرجى المحاولة مرة أخرى.",
+          });
+          console.error("خطأ في استرجاع بيانات الرواية:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchNovelData();
+  }, [novelId, form, toast]);
 
   const onSubmit = async (data: NovelFormValues) => {
-    console.log("بيانات الرواية:", data);
-    // هنا سيتم إرسال البيانات إلى قاعدة البيانات
-    // لأغراض العرض، سننتظر قليلاً ثم ننادي دالة onSave
-    await new Promise(resolve => setTimeout(resolve, 500));
-    onSave();
+    setLoading(true);
+    try {
+      if (novelId === "new") {
+        await createNovel(data);
+        toast({
+          title: "تم إضافة الرواية",
+          description: "تمت إضافة الرواية الجديدة بنجاح",
+        });
+      } else {
+        await updateNovel(novelId!, data);
+        toast({
+          title: "تم تحديث الرواية",
+          description: "تم حفظ التغييرات بنجاح",
+        });
+      }
+      onSave();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في حفظ البيانات",
+        description: "حدث خطأ أثناء محاولة حفظ الرواية. يرجى المحاولة مرة أخرى.",
+      });
+      console.error("خطأ في حفظ بيانات الرواية:", error);
+      setLoading(false);
+    }
   };
 
   // Get form data for preview
@@ -80,6 +130,10 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
     
     setShowMarkdownImporter(false);
   };
+
+  if (loading && novelId !== "new") {
+    return <div className="py-8 text-center">جاري تحميل البيانات...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -142,8 +196,15 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
             <NovelSettingsFields form={form} />
             
             <div className="flex justify-end">
-              <Button type="submit" className="bg-mihrab hover:bg-mihrab-dark">
-                {novelId === "new" ? "إضافة الرواية" : "حفظ التغييرات"}
+              <Button 
+                type="submit" 
+                className="bg-mihrab hover:bg-mihrab-dark"
+                disabled={loading}
+              >
+                {loading 
+                  ? "جاري الحفظ..." 
+                  : (novelId === "new" ? "إضافة الرواية" : "حفظ التغييرات")
+                }
               </Button>
             </div>
           </form>
