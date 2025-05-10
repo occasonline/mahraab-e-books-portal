@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogTitle
 } from "@/components/ui/dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { useEpubReader } from './epub/useEpubReader';
 import EpubControls from './epub/EpubControls';
 import EpubRenderer from './epub/EpubRenderer';

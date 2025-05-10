@@ -1,5 +1,6 @@
+
 import { supabase } from '@/lib/supabase';
-import { createSafeEpubPath } from '@/lib/slugUtils';
+import { createSafeEpubPath, slugify } from '@/lib/slugUtils';
 
 /**
  * يقوم بإنشاء رابط مؤقت لتحميل ملف EPUB
@@ -20,7 +21,10 @@ export const getEpubDownloadUrl = async (fileName: string): Promise<string> => {
     if (fileName.includes('supabase.co/storage')) {
       // تحليل رابط Supabase واستخراج اسم الدلو والمسار
       try {
-        const url = new URL(fileName);
+        // إذا كان الرابط يحتوي على علامات # غير مشفرة، قم بتشفيرها
+        const cleanFileName = fileName.replace(/#/g, '%23');
+        
+        const url = new URL(cleanFileName);
         const pathSegments = url.pathname.split('/');
         
         // استخراج اسم الدلو (عادة القطعة الثالثة بعد /storage/v1/object/)
@@ -49,16 +53,24 @@ export const getEpubDownloadUrl = async (fileName: string): Promise<string> => {
       }
     }
     
-    // حالة 2: الملف هو مسار بسيط (اسم ملف فقط)
-    // يمكن أن يكون مسار بسيط أو عنوان URL مختصر
+    // حالة 2: الملف هو مسار بسيط (اسم ملف فقط) أو يحتوي على أحرف خاصة
     let objectPath = '';
     
     // تحقق مما إذا كان المدخل يبدو كمسار كامل
     if (fileName.includes('/')) {
-      objectPath = fileName;
+      // إذا كان يحتوي على علامات # غير مشفرة، قم بتحويلها إلى مسار آمن
+      if (fileName.includes('#')) {
+        const parts = fileName.split('/');
+        const fileNamePart = parts[parts.length - 1];
+        const safeFileName = slugify(fileNamePart);
+        objectPath = `epub/${safeFileName}.epub`;
+      } else {
+        objectPath = fileName;
+      }
     } else {
       // نفترض أنه اسم ملف فقط، نضيفه إلى مسار epub/
-      objectPath = `epub/${fileName}`;
+      const safeFileName = slugify(fileName);
+      objectPath = `epub/${safeFileName}.epub`;
     }
     
     // محاولة الحصول على رابط موقّع
@@ -69,7 +81,8 @@ export const getEpubDownloadUrl = async (fileName: string): Promise<string> => {
     
     if (error) {
       console.error(`فشل في الحصول على رابط التحميل: ${error.message}`);
-      return '/sample-book.epub'; // ارجاع ملف افتراضي في حالة الخطأ
+      // جرّب استخدام رابط EPUB افتراضي
+      return '/sample-book.epub'; 
     }
     
     console.log("تم إنشاء رابط التحميل بنجاح:", data?.signedUrl);

@@ -6,8 +6,11 @@
 export const slugify = (text: string): string => {
   if (!text) return '';
   
+  // معالجة العلامات الخاصة مثل #
+  const preprocessed = text.replace(/#/g, 'hash');
+  
   // استبدال المسافات والأحرف الخاصة بشرطات
-  let slug = text
+  let slug = preprocessed
     .toString()
     .trim()
     .toLowerCase()

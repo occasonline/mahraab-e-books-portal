@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
@@ -10,7 +11,7 @@ import NovelHeader from '@/components/novel/NovelHeader';
 import NovelContentTabs from '@/components/novel/NovelContentTabs';
 import NovelReader from '@/components/novel/NovelReader';
 import EpubReader from '@/components/novel/EpubReader';
-import { createSafeEpubPath } from '@/lib/slugUtils';
+import { createSafeEpubPath, slugify } from '@/lib/slugUtils';
 
 const NovelDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -69,12 +70,18 @@ const NovelDetail = () => {
             console.log("جار تحميل EPUB من:", fetchedNovel.sample);
             
             // إنشاء مسار آمن للـ URL إذا كان لدينا عنوان للكتاب
-            const safePath = fetchedNovel.title ? 
-              createSafeEpubPath(fetchedNovel.title) : 
-              fetchedNovel.sample;
-              
+            let epubPath = fetchedNovel.sample;
+            
+            // التعامل مع الأسماء المعقدة التي تحتوي على علامات #
+            if (epubPath.includes('#')) {
+              // استخدام اسم ملف آمن بناءً على عنوان الكتاب
+              const safeFileName = createSafeEpubPath(fetchedNovel.title);
+              console.log("تحويل مسار معقد إلى مسار آمن:", safeFileName);
+              epubPath = safeFileName;
+            }
+            
             // الحصول على رابط التحميل
-            const url = await getEpubDownloadUrl(safePath);
+            const url = await getEpubDownloadUrl(epubPath);
             console.log("EPUB URL:", url);
             setEpubUrl(url);
             
