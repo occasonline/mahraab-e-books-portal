@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,8 +43,7 @@ const novelSchema = z.object({
 type NovelFormValues = z.infer<typeof novelSchema>;
 
 // بيانات مؤقتة للرواية - سيتم استبدالها بالبيانات من قاعدة البيانات لاحقًا
-const MOCK_NOVEL = {
-  id: "1",
+const MOCK_NOVEL: NovelFormValues = {
   title: "في محراب التوبة",
   author: "محراب التوبة",
   description: "رحلة روحانية في أعماق النفس البشرية، تكشف أسرار التوبة والعودة إلى الذات الحقيقية.",
@@ -55,7 +53,7 @@ const MOCK_NOVEL = {
   tags: ["روحانية", "فلسفة", "تطوير ذاتي"],
   isPremium: false,
   allowDownload: true,
-  status: "published",
+  status: "published" as const,
   sample: "استيقظ «سالم» على صوت المنبه المزعج كعادته كل صباح. لكن هذا الصباح كان مختلفاً.",
 };
 
@@ -102,7 +100,7 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
           tags: [],
           isPremium: false,
           allowDownload: true,
-          status: "draft",
+          status: "draft" as const,
           sample: "",
         }
       : MOCK_NOVEL
