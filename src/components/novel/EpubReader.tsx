@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import * as epubjs from 'epubjs';
 import {
@@ -16,7 +15,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import './epub-reader.css';
 
 // تعريف نوع EpubBook للاستخدام في الكومبوننت
-type EpubBook = ReturnType<typeof epubjs.Book>;
+type EpubBook = ReturnType<typeof epubjs.default>;
 
 interface EpubReaderProps {
   url: string;
@@ -27,7 +26,7 @@ interface EpubReaderProps {
 
 const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
   const viewerRef = useRef<HTMLDivElement>(null);
-  const book = useRef<EpubBook | null>(null);
+  const book = useRef<any>(null);
   const rendition = useRef<any>(null);
   const [currentLocation, setCurrentLocation] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
@@ -47,7 +46,7 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
         
         // تهيئة الكتاب باستخدام URL
         if (!book.current) {
-          book.current = new epubjs.Book(url);
+          book.current = epubjs.default(url);
         }
         
         // إنشاء المعرض
@@ -89,13 +88,10 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
               // تقدير رقم الصفحة الحالي
               const currentCfi = location.start.cfi;
               if (book.current && book.current.locations && typeof book.current.locations.percentageFromCfi === 'function') {
-                book.current.locations.percentageFromCfi(currentCfi)
-                  .then((percentage: number) => {
-                    setCurrentPage(Math.ceil(percentage * totalPages));
-                  })
-                  .catch(error => {
-                    console.error('خطأ في تحديد موقع الصفحة:', error);
-                  });
+                const percentage = book.current.locations.percentageFromCfi(currentCfi);
+                if (percentage !== undefined) {
+                  setCurrentPage(Math.ceil(percentage * totalPages));
+                }
               }
             }
           });
@@ -109,7 +105,7 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
           
           // تحديد عدد الصفحات الإجمالي بعد تحميل الكتاب
           try {
-            const pageList = await book.current.locations.generate(1024);
+            await book.current.locations.generate(1024);
             const pageCount = Math.ceil(book.current.locations.length() / 1024) || 0;
             setTotalPages(pageCount > 0 ? pageCount : 100); // استخدام 100 كافتراضي إذا تعذر تقدير الصفحات
           } catch (error) {
@@ -120,7 +116,7 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
           // تطبيق الاتجاه من اليمين إلى اليسار للمحتوى العربي
           try {
             const meta = await book.current.loaded.metadata;
-            const isRTL = meta.language === 'ar' || (meta.direction as any) === 'rtl';
+            const isRTL = meta.language === 'ar' || meta.direction === 'rtl';
             if (isRTL) {
               rendition.current.spread('none', { direction: 'rtl' });
               const doc = rendition.current.getContents()[0]?.document;
