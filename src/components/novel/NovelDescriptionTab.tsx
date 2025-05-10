@@ -12,6 +12,7 @@ const NovelDescriptionTab = ({ fullDescription }: NovelDescriptionTabProps) => {
       <div 
         className="prose prose-lg max-w-none text-mihrab-dark/80 leading-relaxed whitespace-pre-line text-right"
         dir="rtl"
+        lang="ar"
       >
         {fullDescription || "لا يوجد وصف مفصل متاح لهذه الرواية."}
       </div>

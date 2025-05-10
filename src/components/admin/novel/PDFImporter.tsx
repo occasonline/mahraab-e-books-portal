@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NovelFormValues } from "@/schemas/novelSchema";
 import { Card, CardContent } from "@/components/ui/card";
@@ -65,8 +64,8 @@ const PDFImporter = ({ onImport, onCancel }: PDFImporterProps) => {
       
       for (let i = 1; i <= pagesToExtract; i++) {
         const page = await pdfDocument.getPage(i);
+        // Remove the normalizeWhitespace property which is causing the TypeScript error
         const content = await page.getTextContent({
-          normalizeWhitespace: true,
           disableCombineTextItems: false
         });
         
