@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -15,6 +14,7 @@ import {
 import { getNovels } from "@/services/novelService";
 import { Novel } from "@/types/supabase";
 import { useToast } from "@/components/ui/use-toast";
+import { formatArabicDate } from "@/lib/dateUtils";
 
 const Novels = () => {
   const [novels, setNovels] = useState<Novel[]>([]);
@@ -166,10 +166,7 @@ const Novels = () => {
                         </Button>
                       </Link>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(novel.created_at).toLocaleDateString('ar-EG', {
-                          year: 'numeric',
-                          month: 'long',
-                        })}
+                        {formatArabicDate(novel.created_at || new Date())}
                       </span>
                     </div>
                   </CardContent>

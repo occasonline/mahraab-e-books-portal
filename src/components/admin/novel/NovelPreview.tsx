@@ -2,6 +2,7 @@
 import { NovelFormValues } from "@/schemas/novelSchema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NovelPreviewCard from "./NovelPreviewCard";
+import { formatArabicDate } from "@/lib/dateUtils";
 
 interface NovelPreviewProps {
   data: Partial<NovelFormValues>;
@@ -90,7 +91,7 @@ const NovelPreview = ({ data }: NovelPreviewProps) => {
                 
                 <div className="flex items-center mb-4">
                   {renderStars()}
-                  <span className="mr-2 text-mihrab-dark/70">4.5/5 (3 تقييمات)</span>
+                  <span className="mr-2 text-mihrab-dark/70">٤.٥/٥ (٣ تقييمات)</span>
                 </div>
                 
                 {renderTags()}
@@ -103,7 +104,7 @@ const NovelPreview = ({ data }: NovelPreviewProps) => {
                   <div className="bg-mihrab-beige bg-opacity-30 p-3 rounded text-center">
                     <p className="text-xs text-mihrab-dark/70">تاريخ النشر</p>
                     <p className="font-bold text-mihrab-dark">
-                      {new Date().toLocaleDateString('ar-EG')}
+                      {formatArabicDate(new Date())}
                     </p>
                   </div>
                   <div className="bg-mihrab-beige bg-opacity-30 p-3 rounded text-center">

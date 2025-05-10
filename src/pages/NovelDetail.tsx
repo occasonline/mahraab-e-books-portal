@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
@@ -7,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { getNovelById } from "@/services/novelService";
 import { Novel } from "@/types/supabase";
+import { formatArabicDate } from '@/lib/dateUtils';
 
 const NovelDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -191,11 +191,7 @@ const NovelDetail = () => {
                   <div className="bg-mihrab-beige bg-opacity-30 p-3 rounded text-center">
                     <p className="text-xs text-mihrab-dark/70">تاريخ النشر</p>
                     <p className="font-bold text-mihrab-dark">
-                      {new Date(novel.created_at || '').toLocaleDateString('ar-EG', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
+                      {novel.created_at ? formatArabicDate(novel.created_at) : ''}
                     </p>
                   </div>
                   <div className="bg-mihrab-beige bg-opacity-30 p-3 rounded text-center">
@@ -210,7 +206,7 @@ const NovelDetail = () => {
                   </div>
                   <div className="bg-mihrab-beige bg-opacity-30 p-3 rounded text-center">
                     <p className="text-xs text-mihrab-dark/70">التقييم</p>
-                    <p className="font-bold text-mihrab-dark">4.5/5</p>
+                    <p className="font-bold text-mihrab-dark">٤.٥/٥</p>
                   </div>
                 </div>
                 
@@ -345,11 +341,7 @@ const NovelDetail = () => {
                         <div>
                           <p className="font-bold text-mihrab">{comment.userName}</p>
                           <p className="text-xs text-mihrab-dark/60">
-                            {new Date(comment.date).toLocaleDateString('ar-EG', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                            })}
+                            {formatArabicDate(comment.date)}
                           </p>
                         </div>
                         <div className="flex">
