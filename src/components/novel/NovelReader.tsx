@@ -139,6 +139,17 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 onFlip={handlePageChange}
                 className="book-render"
                 startPage={0}
+                style={{ padding: '20px' }}
+                drawShadow={true}
+                flippingTime={1000}
+                usePortrait={true}
+                startZIndex={0}
+                autoSize={true}
+                clickEventForward={true}
+                useMouseEvents={true}
+                swipeDistance={0}
+                showPageCorners={true}
+                disableFlipByClick={false}
               >
                 {pages.map((pageContent, index) => (
                   <Page key={index} content={pageContent} pageNumber={index} />
