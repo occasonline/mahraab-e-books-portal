@@ -11,9 +11,17 @@ interface NovelHeaderProps {
   novel: Novel;
   onStartReading: () => void;
   onDownload: (format: string) => void;
+  onOpenEpubReader?: () => void;
+  hasEpub?: boolean;
 }
 
-const NovelHeader = ({ novel, onStartReading, onDownload }: NovelHeaderProps) => {
+const NovelHeader = ({ 
+  novel, 
+  onStartReading, 
+  onDownload, 
+  onOpenEpubReader,
+  hasEpub = false
+}: NovelHeaderProps) => {
   const [isReaderOpen, setIsReaderOpen] = useState(false);
   
   return (
@@ -99,12 +107,21 @@ const NovelHeader = ({ novel, onStartReading, onDownload }: NovelHeaderProps) =>
               </div>
             </div>
             
-            <Button 
-              onClick={() => setIsReaderOpen(true)}
-              className="bg-mihrab-gold hover:bg-mihrab-gold/80 min-w-40"
-            >
-              قراءة بتأثير الكتاب
-            </Button>
+            {hasEpub && onOpenEpubReader ? (
+              <Button 
+                onClick={onOpenEpubReader}
+                className="bg-mihrab-gold hover:bg-mihrab-gold/80 min-w-40"
+              >
+                قراءة بتنسيق EPUB
+              </Button>
+            ) : (
+              <Button 
+                onClick={() => setIsReaderOpen(true)}
+                className="bg-mihrab-gold hover:bg-mihrab-gold/80 min-w-40"
+              >
+                قراءة بتأثير الكتاب
+              </Button>
+            )}
             
             <Button 
               onClick={onStartReading}

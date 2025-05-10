@@ -1,0 +1,41 @@
+
+/* إعدادات أساسية للحاويات */
+.epub-container {
+  background-color: #f8f4e9;
+  overflow: hidden;
+  direction: rtl;
+}
+
+/* إصلاح لعرض العناصر داخل EPUB */
+.epub-container iframe {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden;
+}
+
+/* أنماط للعناصر الداخلية */
+.epub-container .epub-view {
+  background: transparent;
+  padding: 0;
+}
+
+/* دعم الاتجاه RTL */
+html[dir="rtl"] .epub-container .epub-view,
+[dir="rtl"] .epub-container .epub-view {
+  direction: rtl;
+}
+
+/* تحسينات للعرض على الوضع المظلم */
+.dark .epub-container {
+  background-color: #222;
+}
+
+/* تحسين مظهر الهوامش */
+.epub-container .epub-view > iframe {
+  padding: 20px;
+}
+
+/* أنماط للنص */
+.epub-container .epub-view * {
+  font-family: 'Amiri', 'Noto Naskh Arabic', serif !important;
+}

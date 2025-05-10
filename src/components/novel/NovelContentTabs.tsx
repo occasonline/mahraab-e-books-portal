@@ -18,9 +18,17 @@ interface NovelContentTabsProps {
   novel: Novel;
   comments: ReviewComment[];
   onStartReading: () => void;
+  onOpenEpubReader?: () => void;
+  hasEpub?: boolean;
 }
 
-const NovelContentTabs = ({ novel, comments, onStartReading }: NovelContentTabsProps) => {
+const NovelContentTabs = ({ 
+  novel, 
+  comments, 
+  onStartReading,
+  onOpenEpubReader,
+  hasEpub = false
+}: NovelContentTabsProps) => {
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
       <Tabs defaultValue="description" className="w-full">
@@ -39,7 +47,9 @@ const NovelContentTabs = ({ novel, comments, onStartReading }: NovelContentTabsP
           <NovelSampleTab 
             title={novel.title} 
             sample={novel.sample} 
-            onStartReading={onStartReading} 
+            onStartReading={onStartReading}
+            onOpenEpubReader={onOpenEpubReader}
+            hasEpub={hasEpub}
           />
         </TabsContent>
         

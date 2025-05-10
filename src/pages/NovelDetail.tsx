@@ -5,10 +5,12 @@ import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { getNovelById } from "@/services/novelService";
+import { getEpubDownloadUrl } from "@/services/epubService";
 import { Novel } from "@/types/supabase";
 import NovelHeader from '@/components/novel/NovelHeader';
 import NovelContentTabs from '@/components/novel/NovelContentTabs';
 import NovelReader from '@/components/novel/NovelReader';
+import EpubReader from '@/components/novel/EpubReader';
 
 const NovelDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +19,8 @@ const NovelDetail = () => {
   const [novel, setNovel] = useState<Novel | null>(null);
   const [loading, setLoading] = useState(true);
   const [isReaderOpen, setIsReaderOpen] = useState(false);
+  const [isEpubReaderOpen, setIsEpubReaderOpen] = useState(false);
+  const [epubUrl, setEpubUrl] = useState<string>('');
   
   // Mock comments for now - could be replaced with real data in future
   const comments = [
@@ -55,6 +59,20 @@ const NovelDetail = () => {
         const fetchedNovel = await getNovelById(id);
         console.log("Fetched novel content length:", fetchedNovel?.full_description?.length || 0);
         setNovel(fetchedNovel);
+        
+        // تحميل عنوان ملف EPUB إذا كان متاحاً
+        if (fetchedNovel?.epub_url) {
+          try {
+            const url = await getEpubDownloadUrl(fetchedNovel.epub_url);
+            setEpubUrl(url);
+          } catch (epubError) {
+            console.error("Error fetching EPUB URL:", epubError);
+          }
+        } else {
+          // استخدام ملف EPUB تجريبي للعرض
+          setEpubUrl('/sample-book.epub');
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error("Error fetching novel:", error);
@@ -77,7 +95,13 @@ const NovelDetail = () => {
         description: "يرجى الترقية إلى العضوية المدفوعة للوصول إلى هذه الرواية.",
       });
     } else {
-      setIsReaderOpen(true);
+      // افتح قارئ EPUB إذا كان متاحاً، وإلا استخدم القارئ القديم
+      if (epubUrl) {
+        setIsEpubReaderOpen(true);
+      } else {
+        setIsReaderOpen(true);
+      }
+      
       toast({
         title: "تم فتح الرواية",
         description: `استمتع بقراءة رواية ${novel?.title}!`,
@@ -129,6 +153,8 @@ const NovelDetail = () => {
             novel={novel}
             onStartReading={handleStartReading}
             onDownload={handleDownload}
+            onOpenEpubReader={() => setIsEpubReaderOpen(true)}
+            hasEpub={!!epubUrl}
           />
           
           {/* Novel Content Tabs Component */}
@@ -136,14 +162,24 @@ const NovelDetail = () => {
             novel={novel}
             comments={comments}
             onStartReading={handleStartReading}
+            onOpenEpubReader={() => setIsEpubReaderOpen(true)}
+            hasEpub={!!epubUrl}
           />
           
-          {/* Full Novel Reader Component */}
+          {/* قارئ الكتاب القديم - سنبقيه كنسخة احتياطية */}
           <NovelReader 
             title={novel.title}
             content={novel.full_description || novel.sample || ''}
             isOpen={isReaderOpen}
             onClose={() => setIsReaderOpen(false)}
+          />
+          
+          {/* قارئ EPUB الجديد */}
+          <EpubReader
+            title={novel.title}
+            url={epubUrl}
+            isOpen={isEpubReaderOpen}
+            onClose={() => setIsEpubReaderOpen(false)}
           />
         </div>
       </div>

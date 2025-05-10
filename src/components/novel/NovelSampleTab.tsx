@@ -7,9 +7,17 @@ interface NovelSampleTabProps {
   title: string;
   sample: string | null;
   onStartReading: () => void;
+  onOpenEpubReader?: () => void;
+  hasEpub?: boolean;
 }
 
-const NovelSampleTab = ({ title, sample, onStartReading }: NovelSampleTabProps) => {
+const NovelSampleTab = ({ 
+  title, 
+  sample, 
+  onStartReading, 
+  onOpenEpubReader,
+  hasEpub = false
+}: NovelSampleTabProps) => {
   const [readerSettings, setReaderSettings] = useState({
     fontSize: 16,
     lineHeight: 1.6,
@@ -90,12 +98,21 @@ const NovelSampleTab = ({ title, sample, onStartReading }: NovelSampleTabProps) 
             متابعة القراءة
           </Button>
           
-          <Button
-            onClick={() => setIsReaderOpen(true)}
-            className="bg-mihrab-gold hover:bg-mihrab-gold/80"
-          >
-            قراءة بتأثير الكتاب
-          </Button>
+          {hasEpub && onOpenEpubReader ? (
+            <Button
+              onClick={onOpenEpubReader}
+              className="bg-mihrab-gold hover:bg-mihrab-gold/80"
+            >
+              قراءة بتنسيق EPUB
+            </Button>
+          ) : (
+            <Button
+              onClick={() => setIsReaderOpen(true)}
+              className="bg-mihrab-gold hover:bg-mihrab-gold/80"
+            >
+              قراءة بتأثير الكتاب
+            </Button>
+          )}
         </div>
       </div>
       
