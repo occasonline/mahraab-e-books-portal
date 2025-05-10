@@ -209,7 +209,7 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
               onClick={() => setShowPDFImporter(prev => !prev)}
             >
               <FileText className="h-4 w-4" />
-              <span>{showPDFImporter ? "إخفاء استيراد الملف" : "استيراد من ملف"}</span>
+              <span>{showPDFImporter ? "إخفاء المستورد" : "استيراد من ملف"}</span>
             </Button>
           )}
         </div>

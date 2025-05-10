@@ -16,16 +16,16 @@ const NovelDescriptionFields = ({ form }: NovelDescriptionFieldsProps) => {
         name="description"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>وصف مختصر</FormLabel>
+            <FormLabel className="font-heading">وصف مختصر</FormLabel>
             <FormControl>
               <Textarea 
                 placeholder="أدخل وصفًا مختصرًا للرواية (يظهر في القوائم والبطاقات)" 
-                className="min-h-[80px] text-right" 
+                className="min-h-[80px] text-right font-sans" 
                 dir="rtl"
                 {...field} 
               />
             </FormControl>
-            <FormDescription className="text-right">
+            <FormDescription className="text-right font-sans">
               هذا الوصف يظهر في القوائم وبطاقات الروايات. يُفضل أن يكون موجزًا.
             </FormDescription>
             <FormMessage />
@@ -38,16 +38,16 @@ const NovelDescriptionFields = ({ form }: NovelDescriptionFieldsProps) => {
         name="fullDescription"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>الوصف الكامل</FormLabel>
+            <FormLabel className="font-heading">الوصف الكامل</FormLabel>
             <FormControl>
               <Textarea 
                 placeholder="أدخل وصفًا تفصيليًا للرواية" 
-                className="min-h-[150px] text-right" 
+                className="min-h-[150px] text-right font-sans" 
                 dir="rtl"
                 {...field} 
               />
             </FormControl>
-            <FormDescription className="text-right">
+            <FormDescription className="text-right font-sans">
               هذا الوصف يظهر في صفحة تفاصيل الرواية. يمكن أن يكون مفصلاً.
             </FormDescription>
             <FormMessage />
