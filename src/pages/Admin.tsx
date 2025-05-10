@@ -8,6 +8,7 @@ import NovelEditor from "@/components/admin/NovelEditor";
 import NovelsList from "@/components/admin/NovelsList";
 import WebsiteSettingsForm from "@/components/admin/WebsiteSettingsForm";
 import { useToast } from "@/components/ui/use-toast";
+import { PlusCircle } from "lucide-react";
 
 // مؤقتًا: سنستخدم هذه الدالة للتحقق من المستخدم المسؤول
 // في النسخة النهائية، يجب استبدالها بنظام مصادقة حقيقي
@@ -48,6 +49,10 @@ const Admin = () => {
       </Layout>
     );
   }
+
+  const handleAddNovel = () => {
+    setEditingNovel("new");
+  };
 
   return (
     <Layout>
@@ -92,9 +97,10 @@ const Admin = () => {
                     <div className="flex justify-between items-center">
                       <h2 className="text-xl font-heading font-bold text-mihrab">الروايات المنشورة</h2>
                       <Button 
-                        className="bg-mihrab hover:bg-mihrab-dark"
-                        onClick={() => setEditingNovel("new")}
+                        className="bg-mihrab hover:bg-mihrab-dark flex items-center gap-2"
+                        onClick={handleAddNovel}
                       >
+                        <PlusCircle className="h-4 w-4" />
                         إضافة رواية جديدة
                       </Button>
                     </div>
