@@ -58,17 +58,22 @@ const NovelDetail = () => {
       try {
         const fetchedNovel = await getNovelById(id);
         console.log("Fetched novel content length:", fetchedNovel?.full_description?.length || 0);
+        console.log("Fetched novel sample:", fetchedNovel?.sample);
         setNovel(fetchedNovel);
         
         // تحميل عنوان ملف EPUB إذا كان متاحاً
-        if (fetchedNovel?.epub_url) {
+        if (fetchedNovel?.sample) {
           try {
-            const url = await getEpubDownloadUrl(fetchedNovel.epub_url);
+            console.log("جار تحميل EPUB من:", fetchedNovel.sample);
+            const url = await getEpubDownloadUrl(fetchedNovel.sample);
+            console.log("EPUB URL:", url);
             setEpubUrl(url);
           } catch (epubError) {
             console.error("Error fetching EPUB URL:", epubError);
+            setEpubUrl('/sample-book.epub'); // استخدام ملف تجريبي في حالة الخطأ
           }
         } else {
+          console.log("Using sample EPUB");
           // استخدام ملف EPUB تجريبي للعرض
           setEpubUrl('/sample-book.epub');
         }
@@ -97,6 +102,7 @@ const NovelDetail = () => {
     } else {
       // افتح قارئ EPUB إذا كان متاحاً، وإلا استخدم القارئ القديم
       if (epubUrl) {
+        console.log("Opening EPUB reader with URL:", epubUrl);
         setIsEpubReaderOpen(true);
       } else {
         setIsReaderOpen(true);

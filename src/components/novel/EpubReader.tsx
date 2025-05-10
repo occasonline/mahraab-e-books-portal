@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import * as epubjs from 'epubjs';
 import {
@@ -34,20 +35,38 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [fontSize, setFontSize] = useState(100); // percentage
+  const [error, setError] = useState<string | null>(null);
   const STORAGE_KEY = `epub-reader-${title}`;
   
   // تحميل الكتاب عند فتح القارئ
   useEffect(() => {
-    if (!isOpen || !url) return;
+    if (!isOpen) return;
     
     const loadBook = async () => {
       try {
         setIsLoading(true);
+        setError(null);
+        console.log('محاولة تحميل الكتاب الإلكتروني من:', url);
         
         // تهيئة الكتاب باستخدام URL
-        if (!book.current) {
-          book.current = epubjs.default(url);
+        if (!url) {
+          setError('لم يتم تحديد مسار الكتاب الإلكتروني');
+          setIsLoading(false);
+          return;
         }
+        
+        // إذا كان الكتاب قد تم تحميله مسبقًا، قم بتنظيفه
+        if (book.current) {
+          book.current = null;
+        }
+        
+        // تحميل الكتاب الجديد
+        const newBook = epubjs.default(url, { openAs: 'epub' });
+        book.current = newBook;
+        
+        // انتظار تحميل الكتاب
+        await newBook.ready;
+        console.log('تم تحميل الكتاب بنجاح');
         
         // إنشاء المعرض
         if (viewerRef.current && book.current) {
@@ -72,25 +91,39 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
           // تطبيق إعدادات العرض قبل عرض الكتاب
           await setReaderStyles();
           
-          // عرض الكتاب من الموقع المحفوظ أو من البداية
-          if (savedLocation) {
-            await rendition.current.display(savedLocation);
-          } else {
-            await rendition.current.display();
+          // محاولة عرض الكتاب
+          try {
+            if (savedLocation) {
+              await rendition.current.display(savedLocation);
+              console.log('تم عرض الكتاب من الموقع المحفوظ');
+            } else {
+              await rendition.current.display();
+              console.log('تم عرض الكتاب من البداية');
+            }
+          } catch (displayError) {
+            console.error('خطأ في عرض الكتاب:', displayError);
+            setError('فشل في عرض محتوى الكتاب، قد يكون الملف تالفًا');
+            setIsLoading(false);
+            return;
           }
           
           // استماع لأحداث التنقل
           rendition.current.on('locationChanged', (location: any) => {
             if (location?.start?.cfi) {
+              console.log('تغير موقع القراءة:', location.start.cfi);
               setCurrentLocation(location.start.cfi);
               localStorage.setItem(STORAGE_KEY, location.start.cfi);
               
               // تقدير رقم الصفحة الحالي
               const currentCfi = location.start.cfi;
               if (book.current && book.current.locations && typeof book.current.locations.percentageFromCfi === 'function') {
-                const percentage = book.current.locations.percentageFromCfi(currentCfi);
-                if (percentage !== undefined) {
-                  setCurrentPage(Math.ceil(percentage * totalPages));
+                try {
+                  const percentage = book.current.locations.percentageFromCfi(currentCfi);
+                  if (percentage !== undefined) {
+                    setCurrentPage(Math.ceil(percentage * totalPages));
+                  }
+                } catch (err) {
+                  console.error('خطأ في حساب النسبة المئوية:', err);
                 }
               }
             }
@@ -105,8 +138,15 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
           
           // تحديد عدد الصفحات الإجمالي بعد تحميل الكتاب
           try {
-            await book.current.locations.generate(1024);
-            const pageCount = Math.ceil(book.current.locations.length() / 1024) || 0;
+            // إنشاء مواقع الكتاب لتقدير عدد الصفحات
+            if (!book.current.locations._locations) {
+              console.log('جاري إنشاء قائمة الصفحات...');
+              await book.current.locations.generate(1024);
+              console.log('تم إنشاء قائمة الصفحات بنجاح');
+            }
+            
+            const pageCount = Math.ceil((book.current.locations.length() || 0) / 1024) || 0;
+            console.log('عدد الصفحات المقدر:', pageCount);
             setTotalPages(pageCount > 0 ? pageCount : 100); // استخدام 100 كافتراضي إذا تعذر تقدير الصفحات
           } catch (error) {
             console.error('خطأ في إنشاء قائمة الصفحات:', error);
@@ -117,13 +157,18 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
           try {
             const meta = await book.current.loaded.metadata;
             const isRTL = meta.language === 'ar' || meta.direction === 'rtl';
+            console.log('هل الكتاب باللغة العربية؟', isRTL, 'اللغة:', meta.language, 'الاتجاه:', meta.direction);
+            
             if (isRTL) {
               rendition.current.spread('none', { direction: 'rtl' });
-              const doc = rendition.current.getContents()[0]?.document;
-              if (doc) {
-                doc.documentElement.style.direction = 'rtl';
-                doc.documentElement.style.textAlign = 'right';
-              }
+              const contents = rendition.current.getContents();
+              contents.forEach((content: any) => {
+                if (content && content.document && content.document.documentElement) {
+                  content.document.documentElement.style.direction = 'rtl';
+                  content.document.documentElement.style.textAlign = 'right';
+                  console.log('تم تطبيق الاتجاه من اليمين إلى اليسار');
+                }
+              });
             }
           } catch (error) {
             console.error('خطأ في تحديد اتجاه النص:', error);
@@ -133,6 +178,7 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
         setIsLoading(false);
       } catch (error) {
         console.error('خطأ في تحميل الكتاب الإلكتروني:', error);
+        setError('فشل في تحميل الكتاب الإلكتروني. يرجى المحاولة مرة أخرى لاحقًا.');
         setIsLoading(false);
       }
     };
@@ -142,7 +188,11 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
     // التنظيف عند إغلاق القارئ
     return () => {
       if (rendition.current) {
-        rendition.current.destroy();
+        try {
+          rendition.current.destroy();
+        } catch (err) {
+          console.error('خطأ أثناء تدمير العرض:', err);
+        }
       }
     };
   }, [isOpen, url, STORAGE_KEY, totalPages]);
@@ -285,6 +335,25 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
                 <p className="text-mihrab-dark dark:text-mihrab-cream">جاري تحميل الكتاب...</p>
               </div>
             </div>
+          ) : error ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center p-4 max-w-md">
+                <p className="text-red-500 font-bold mb-4">{error}</p>
+                <p className="text-mihrab-dark dark:text-mihrab-cream mb-4">
+                  لم نتمكن من عرض الكتاب الإلكتروني. يرجى التحقق من صحة الملف أو تحميله مرة أخرى.
+                </p>
+                <div className="text-sm opacity-70 mb-4">
+                  عنوان URL للكتاب: {url}
+                </div>
+                <Button 
+                  onClick={onClose}
+                  variant="outline" 
+                  className="bg-mihrab/80 text-white hover:bg-mihrab"
+                >
+                  إغلاق
+                </Button>
+              </div>
+            </div>
           ) : (
             <>
               <div className="absolute inset-0 w-full h-full epub-container">
@@ -311,43 +380,45 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
           )}
           
           {/* شريط التقدم */}
-          <div className="absolute bottom-4 left-0 right-0 px-8">
-            <div className="bg-white/90 dark:bg-mihrab-dark/90 rounded-full py-2 px-4 shadow-md">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm text-mihrab-dark/70 dark:text-mihrab-cream/70">
-                  {progressPercentage}%
+          {!error && !isLoading && (
+            <div className="absolute bottom-4 left-0 right-0 px-8">
+              <div className="bg-white/90 dark:bg-mihrab-dark/90 rounded-full py-2 px-4 shadow-md">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-mihrab-dark/70 dark:text-mihrab-cream/70">
+                    {progressPercentage}%
+                  </div>
+                  
+                  <div className="text-sm text-mihrab-dark dark:text-mihrab-cream">
+                    الصفحة {currentPage} من {totalPages}
+                  </div>
                 </div>
                 
-                <div className="text-sm text-mihrab-dark dark:text-mihrab-cream">
-                  الصفحة {currentPage} من {totalPages}
+                <Progress 
+                  value={progressPercentage} 
+                  className="h-2 dark:bg-mihrab-dark" 
+                />
+                
+                <div className="flex justify-center gap-8 mt-4">
+                  <Button 
+                    onClick={prevPage}
+                    variant="outline" 
+                    className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
+                  >
+                    <ChevronRight size={16} />
+                    الصفحة السابقة
+                  </Button>
+                  <Button 
+                    onClick={nextPage}
+                    variant="outline" 
+                    className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
+                  >
+                    الصفحة التالية
+                    <ChevronLeft size={16} />
+                  </Button>
                 </div>
               </div>
-              
-              <Progress 
-                value={progressPercentage} 
-                className="h-2 dark:bg-mihrab-dark" 
-              />
-              
-              <div className="flex justify-center gap-8 mt-4">
-                <Button 
-                  onClick={prevPage}
-                  variant="outline" 
-                  className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
-                >
-                  <ChevronRight size={16} />
-                  الصفحة السابقة
-                </Button>
-                <Button 
-                  onClick={nextPage}
-                  variant="outline" 
-                  className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
-                >
-                  الصفحة التالية
-                  <ChevronLeft size={16} />
-                </Button>
-              </div>
             </div>
-          </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

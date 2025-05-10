@@ -11,19 +11,24 @@ export const getEpubDownloadUrl = async (fileName: string): Promise<string> => {
     // في بيئة الإنتاج، سيتم استخدام هذه الدالة لجلب ملف EPUB من Supabase
     // حالياً نستخدم ملفاً محلياً للاختبار
     
+    // للاختبار، نتحقق إذا كان الملف المطلوب هو القيمة الافتراضية
+    if (!fileName || fileName === 'default' || fileName === 'sample') {
+      console.log('استخدام ملف EPUB محلي للاختبار:', fileName);
+      return '/sample-book.epub';
+    }
+    
     // استرجاع رابط مؤقت من Supabase Storage
-    // const { data, error } = await supabase.storage
-    //   .from('novels')
-    //   .createSignedUrl(`epub/${fileName}`, 3600);
+    const { data, error } = await supabase.storage
+      .from('novels')
+      .createSignedUrl(`epub/${fileName}`, 3600);
     
-    // if (error) {
-    //   throw new Error(`فشل في الحصول على رابط التحميل: ${error.message}`);
-    // }
+    if (error) {
+      console.error(`فشل في الحصول على رابط التحميل: ${error.message}`);
+      return '/sample-book.epub'; // ارجاع ملف افتراضي في حالة الخطأ
+    }
     
-    // return data?.signedUrl || '';
-    
-    // للاختبار، ارجع رابط لملف EPUB محلي
-    return '/sample-book.epub';
+    console.log('تم إنشاء رابط التحميل بنجاح:', data?.signedUrl);
+    return data?.signedUrl || '/sample-book.epub';
     
   } catch (error) {
     console.error('خطأ في خدمة EPUB:', error);
