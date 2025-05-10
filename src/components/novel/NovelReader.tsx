@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import ReactMarkdown from 'react-markdown';
@@ -175,9 +174,13 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     return pages;
   }, [content, title, fontSize]);
   
-  // الصفحات المعكوسة للقراءة RTL
-  const rtlPages = useMemo(() => [...splitContentIntoPages].reverse(), [splitContentIntoPages]);
-  const pages = rtlPages;
+  // إصلاح المشكلة: استخدام الصفحات مباشرة بدون عكس أو قصّ
+  const pages = splitContentIntoPages;
+  
+  // سجل عدد الصفحات التي يتم تمريرها إلى HTMLFlipBook للتحقق
+  useEffect(() => {
+    console.log('Children passed to FlipBook:', pages.length);
+  }, [pages]);
 
   // ضبط عدد الصفحات الإجمالي وتحميل الصفحة المحفوظة
   useEffect(() => {
@@ -438,9 +441,9 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     return items;
   };
 
-  // الحصول على رقم الصفحة الحقيقي (معكوس)
+  // الحصول على رقم الصفحة الحقيقي
   const getRealPageNumber = (index: number) => {
-    return totalPages - index;
+    return index + 1; // تصحيح ترقيم الصفحات من 1 بدلاً من عكسها
   };
 
   return (
