@@ -1,6 +1,6 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import HTMLFlipBook from 'react-pageflip';
+import ReactMarkdown from 'react-markdown';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
@@ -23,7 +23,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import './flip-rtl.css'; // استيراد ملف CSS الخاص بالـRTL
+import './flip-rtl.css';
 
 interface NovelReaderProps {
   title: string;
@@ -58,9 +58,9 @@ const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: num
           </div>
         ) : (
           <div className="h-full overflow-hidden flex flex-col">
-            <p className={`flex-1 overflow-hidden whitespace-pre-line leading-relaxed font-amiri text-mihrab-dark ${props.fontSize} dark:text-mihrab-cream`}>
-              {props.content}
-            </p>
+            <div className={`flex-1 overflow-hidden leading-relaxed font-amiri text-mihrab-dark ${props.fontSize} dark:text-mihrab-cream`}>
+              <ReactMarkdown>{props.content}</ReactMarkdown>
+            </div>
             <span className="self-end pr-4 pb-4 text-sm opacity-60 dark:text-mihrab-cream/60">{props.pageNumber}</span>
           </div>
         )}
@@ -76,51 +76,106 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [fontSize, setFontSize] = useState<string>("text-lg"); // حجم الخط الافتراضي
+  const [fontSize, setFontSize] = useState<string>("text-lg");
   const bookRef = useRef(null);
+  const measureRef = useRef<HTMLDivElement>(null);
   
-  // تقسيم المحتوى إلى صفحات مع تحسين الخوارزمية باستخدام useMemo
+  // تقسيم المحتوى إلى صفحات مع استخدام القياس الفعلي للنص
   const splitContentIntoPages = useMemo(() => {
     if (!content) return [];
     
-    const charsPerPage = 350; // تخفيض للنص العربي لعرض أفضل
     const pages = [];
     
     // صفحة العنوان
     pages.push(title);
     
-    // تقسيم حسب الفقرات أولاً
-    const paragraphs = content.split('\n\n');
-    let currentPageContent = '';
-    
-    // تجميع الفقرات في صفحات
-    for (let i = 0; i < paragraphs.length; i++) {
-      const paragraph = paragraphs[i].trim();
-      if (!paragraph) continue;
+    // قياس النص وتقسيمه حسب المساحة الفعلية
+    if (measureRef.current) {
+      // تنظيف النص وتعيين إعدادات القياس
+      const textToMeasure = content.trim();
+      measureRef.current.className = `font-amiri ${fontSize} invisible fixed top-0 left-0 right-0 overflow-hidden p-4`;
+      measureRef.current.style.width = "450px"; // تعيين العرض ليناسب الصفحة
       
-      if ((currentPageContent.length + paragraph.length) > charsPerPage && currentPageContent.length > 0) {
-        // الصفحة الحالية ممتلئة، أضفها إلى الصفحات وابدأ صفحة جديدة
+      // العوامل المؤثرة على تقسيم المحتوى
+      const PAGE_HEIGHT_PX = 550; // تقدير أولي لارتفاع الصفحة (يمكن ضبطه)
+      
+      // تقسيم المحتوى حسب الفقرات أولاً
+      const paragraphs = textToMeasure.split('\n\n');
+      let currentPageContent = '';
+      
+      // معالجة كل فقرة
+      for (let i = 0; i < paragraphs.length; i++) {
+        const paragraph = paragraphs[i].trim();
+        if (!paragraph) continue;
+        
+        // قياس محتوى الصفحة الحالية + الفقرة الجديدة
+        const testContent = currentPageContent + (currentPageContent ? '\n\n' : '') + paragraph;
+        measureRef.current.innerHTML = testContent;
+        
+        // فحص هل التفاع تجاوز حد الصفحة
+        if (measureRef.current.scrollHeight > PAGE_HEIGHT_PX && currentPageContent.length > 0) {
+          // حفظ الصفحة الحالية وبدء صفحة جديدة
+          pages.push(currentPageContent);
+          currentPageContent = paragraph;
+        } else {
+          // إضافة الفقرة للصفحة الحالية
+          currentPageContent = testContent;
+        }
+        
+        // العمل مع علامات فاصل الصفحات اليدوية
+        if (paragraph.includes('<!-- pagebreak -->')) {
+          const parts = paragraph.split('<!-- pagebreak -->');
+          // إضافة النص قبل الفاصل إلى الصفحة الحالية
+          const beforeBreak = parts.shift()?.trim();
+          if (beforeBreak) {
+            currentPageContent = (currentPageContent || '') + beforeBreak;
+          }
+          
+          // حفظ الصفحة الحالية
+          pages.push(currentPageContent);
+          
+          // بدء صفحة جديدة بالنص بعد الفاصل
+          currentPageContent = parts.join('\n\n').trim();
+        }
+      }
+      
+      // إضافة الصفحة الأخيرة إذا بقي محتوى
+      if (currentPageContent) {
+        pages.push(currentPageContent);
+      }
+    } else {
+      // خطة بديلة إذا لم يكن عنصر القياس جاهزًا
+      const charsPerPage = 800; // زيادة عدد الأحرف للصفحة الواحدة
+      
+      // تقسيم حسب الفقرات
+      const paragraphs = content.split('\n\n');
+      let currentPageContent = '';
+      
+      for (let i = 0; i < paragraphs.length; i++) {
+        const paragraph = paragraphs[i].trim();
+        if (!paragraph) continue;
+        
+        if ((currentPageContent.length + paragraph.length) > charsPerPage && currentPageContent.length > 0) {
+          pages.push(currentPageContent.trim());
+          currentPageContent = paragraph;
+        } else {
+          currentPageContent += (currentPageContent ? '\n\n' : '') + paragraph;
+        }
+      }
+      
+      if (currentPageContent.trim()) {
         pages.push(currentPageContent.trim());
-        currentPageContent = paragraph;
-      } else {
-        // أضف الفقرة إلى الصفحة الحالية
-        currentPageContent += (currentPageContent ? '\n\n' : '') + paragraph;
       }
     }
     
-    // أضف الصفحة الأخيرة إذا لم تكن فارغة
-    if (currentPageContent.trim()) {
-      pages.push(currentPageContent.trim());
-    }
-    
     return pages;
-  }, [content, title]);
+  }, [content, title, fontSize]);
   
-  // الصفحات المعكوسة للقراءة RTL - مفتاح الحل A
+  // الصفحات المعكوسة للقراءة RTL
   const rtlPages = useMemo(() => [...splitContentIntoPages].reverse(), [splitContentIntoPages]);
   const pages = rtlPages;
 
-  // ضبط عدد الصفحات الإجمالي عند تحميل المكون أو تغيير المحتوى
+  // ضبط عدد الصفحات الإجمالي وتحميل الصفحة المحفوظة
   useEffect(() => {
     setTotalPages(pages.length);
     
@@ -154,16 +209,16 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     localStorage.setItem(STORAGE_KEY, newPage.toString());
   };
 
-  // وظائف التنقل التي تحترم اتجاه RTL - تم تبديل الوظائف كجزء من الحل A
+  // وظائف التنقل
   const nextPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipNext(); // عكس الوظائف لدعم RTL
+      (bookRef.current as any).pageFlip().flipNext();
     }
   };
 
   const prevPage = () => {
     if (bookRef.current) {
-      (bookRef.current as any).pageFlip().flipPrev(); // عكس الوظائف لدعم RTL
+      (bookRef.current as any).pageFlip().flipPrev();
     }
   };
 
@@ -433,6 +488,13 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
         <DialogDescription className="text-center text-xs pt-0 mt-0 dark:text-mihrab-cream/70">
           استخدم الأزرار أسفل الكتاب أو انقر على جانبي الصفحة للتنقل بين الصفحات
         </DialogDescription>
+        
+        {/* منطقة قياس النص - مخفية */}
+        <div 
+          ref={measureRef} 
+          className="invisible absolute top-0 left-0 right-0" 
+          aria-hidden="true"
+        ></div>
         
         <div className="flex-1 relative overflow-hidden bg-mihrab-beige/30 dark:bg-mihrab-dark/60">
           <div dir="rtl" className="absolute inset-0 flex justify-center items-center">
