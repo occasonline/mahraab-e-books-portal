@@ -7,6 +7,7 @@ import { Form } from "@/components/ui/form";
 import ChapterEditor from "./ChapterEditor";
 import { novelSchema, NovelFormValues } from "@/schemas/novelSchema";
 import { MOCK_NOVEL } from "@/constants/novelData";
+import { FileText, Upload } from "lucide-react";
 
 // Import the form field components
 import NovelBasicFields from "./novel/NovelBasicFields";
@@ -16,6 +17,7 @@ import NovelTagsField from "./novel/NovelTagsField";
 import NovelSampleField from "./novel/NovelSampleField";
 import NovelSettingsFields from "./novel/NovelSettingsFields";
 import NovelPreview from "./novel/NovelPreview";
+import MarkdownImporter from "./novel/MarkdownImporter";
 
 interface NovelEditorProps {
   novelId: string | null; // "new" لإضافة رواية جديدة أو معرف الرواية للتعديل
@@ -26,6 +28,7 @@ interface NovelEditorProps {
 const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
   const [showChapterEditor, setShowChapterEditor] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showMarkdownImporter, setShowMarkdownImporter] = useState(false);
   
   // تهيئة نموذج التحرير
   const form = useForm<NovelFormValues>({
@@ -67,6 +70,17 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
   // Get form data for preview
   const formValues = form.watch();
 
+  // Handle markdown data import
+  const handleMarkdownData = (data: Partial<NovelFormValues>) => {
+    if (data.title) form.setValue("title", data.title);
+    if (data.description) form.setValue("description", data.description);
+    if (data.fullDescription) form.setValue("fullDescription", data.fullDescription);
+    if (data.author) form.setValue("author", data.author);
+    if (data.sample) form.setValue("sample", data.sample);
+    
+    setShowMarkdownImporter(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -95,11 +109,24 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
           >
             {showPreview ? "إخفاء المعاينة" : "معاينة"}
           </Button>
+
+          {novelId === "new" && (
+            <Button 
+              variant="outline" 
+              className="mr-2 flex items-center gap-2"
+              onClick={() => setShowMarkdownImporter(prev => !prev)}
+            >
+              <FileText className="h-4 w-4" />
+              <span>{showMarkdownImporter ? "إخفاء استيراد الملف" : "استيراد من ملف Markdown"}</span>
+            </Button>
+          )}
         </div>
       </div>
       
       {showChapterEditor ? (
         <ChapterEditor novelId={novelId!} />
+      ) : showMarkdownImporter ? (
+        <MarkdownImporter onImport={handleMarkdownData} onCancel={() => setShowMarkdownImporter(false)} />
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
