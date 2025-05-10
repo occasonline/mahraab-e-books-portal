@@ -8,6 +8,7 @@ import {
   DialogDescription,
   DialogTitle
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useEpubReader } from './epub/useEpubReader';
 import EpubControls from './epub/EpubControls';
 import EpubRenderer from './epub/EpubRenderer';
@@ -60,7 +61,10 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
         dir="rtl"
       >
         <DialogHeader className="px-0 py-0">
-          <DialogTitle className="sr-only">قارئ الكتب الإلكترونية - {title}</DialogTitle>
+          <DialogTitle className="sr-only">
+            <VisuallyHidden>قارئ الكتب الإلكترونية - {title}</VisuallyHidden>
+          </DialogTitle>
+          
           <EpubControls
             title={title}
             isDarkMode={isDarkMode}
@@ -70,6 +74,7 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
             reloadBook={reloadBook}
             isLoading={isLoading}
           />
+          
           <DialogClose className="absolute top-3 left-3 text-mihrab hover:text-mihrab-dark dark:text-mihrab-cream dark:hover:text-white" />
         </DialogHeader>
         

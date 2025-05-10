@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
@@ -11,6 +10,7 @@ import NovelHeader from '@/components/novel/NovelHeader';
 import NovelContentTabs from '@/components/novel/NovelContentTabs';
 import NovelReader from '@/components/novel/NovelReader';
 import EpubReader from '@/components/novel/EpubReader';
+import { createSafeEpubPath } from '@/lib/slugUtils';
 
 const NovelDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -67,9 +67,17 @@ const NovelDetail = () => {
           try {
             setLoadingEpub(true);
             console.log("جار تحميل EPUB من:", fetchedNovel.sample);
-            const url = await getEpubDownloadUrl(fetchedNovel.sample);
+            
+            // إنشاء مسار آمن للـ URL إذا كان لدينا عنوان للكتاب
+            const safePath = fetchedNovel.title ? 
+              createSafeEpubPath(fetchedNovel.title) : 
+              fetchedNovel.sample;
+              
+            // الحصول على رابط التحميل
+            const url = await getEpubDownloadUrl(safePath);
             console.log("EPUB URL:", url);
             setEpubUrl(url);
+            
           } catch (epubError) {
             console.error("Error fetching EPUB URL:", epubError);
             toast({

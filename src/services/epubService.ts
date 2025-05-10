@@ -1,9 +1,9 @@
-
 import { supabase } from '@/lib/supabase';
+import { createSafeEpubPath } from '@/lib/slugUtils';
 
 /**
  * يقوم بإنشاء رابط مؤقت لتحميل ملف EPUB
- * @param fileName اسم ملف EPUB في Supabase Storage
+ * @param fileName اسم ملف EPUB في Supabase Storage أو المسار الكامل
  * @returns رابط التحميل المؤقت
  */
 export const getEpubDownloadUrl = async (fileName: string): Promise<string> => {
@@ -16,31 +16,21 @@ export const getEpubDownloadUrl = async (fileName: string): Promise<string> => {
       return '/sample-book.epub';
     }
     
-    // تحقق مما إذا كان الملف هو عبارة عن URL كامل من Supabase
-    if (fileName.includes('supabase.co/storage') || fileName.startsWith('http')) {
-      // الرابط هو بالفعل URL كامل، قم بإزالة معلمات التوقيع إذا كانت موجودة
-      const urlParts = fileName.split('?');
-      const baseUrl = urlParts[0];
-      
-      // محاولة إنشاء رابط مؤقت جديد
+    // حالة 1: الملف هو URL كامل من Supabase
+    if (fileName.includes('supabase.co/storage')) {
+      // تحليل رابط Supabase واستخراج اسم الدلو والمسار
       try {
-        // استخراج مسار الملف من URL
-        const storageUrl = new URL(baseUrl);
-        const pathParts = storageUrl.pathname.split('/');
-        const bucketName = pathParts[2]; // e.g. 'novels'
+        const url = new URL(fileName);
+        const pathSegments = url.pathname.split('/');
         
-        // إزالة '/storage/v1/object/sign/' و اسم الدلو من المسار
-        const objectPathParts = pathParts.slice(3);
-        let objectPath = objectPathParts.join('/');
+        // استخراج اسم الدلو (عادة القطعة الثالثة بعد /storage/v1/object/)
+        let bucketIndex = pathSegments.findIndex(segment => segment === 'object') + 1;
+        if (bucketIndex === 0) bucketIndex = 2; // حالة احتياطية
         
-        // إذا كان المسار يبدأ بـ 'public/' أو 'sign/', قم بإزالته
-        if (objectPath.startsWith('public/')) {
-          objectPath = objectPath.substring(7);
-        } else if (objectPath.startsWith('sign/')) {
-          objectPath = objectPath.substring(5);
-        }
+        const bucketName = pathSegments[bucketIndex];
+        const objectPath = pathSegments.slice(bucketIndex + 1).join('/');
         
-        console.log("محاولة إنشاء رابط تنزيل جديد:", bucketName, objectPath);
+        console.log(`محاولة إنشاء رابط موقّع: دلو=${bucketName}, مسار=${objectPath}`);
         
         // إنشاء رابط موقّع جديد
         const { data, error } = await supabase.storage
@@ -48,23 +38,34 @@ export const getEpubDownloadUrl = async (fileName: string): Promise<string> => {
           .createSignedUrl(objectPath, 3600);
         
         if (error) {
-          console.error("فشل في إنشاء رابط موقّع للملف:", error.message);
           throw error;
         }
         
+        console.log("تم إنشاء رابط موقّع:", data.signedUrl);
         return data.signedUrl;
-      } catch (urlError) {
-        console.error("خطأ في معالجة URL:", urlError);
-        console.log("استخدام الرابط الأصلي:", baseUrl);
-        // إرجاع الرابط الأصلي بدون معلمات التوقيع
-        return baseUrl;
+      } catch (e) {
+        console.error("خطأ في تحليل URL Supabase:", e);
+        return '/sample-book.epub';
       }
     }
     
-    // رفع ملف إلى دلو التخزين 
+    // حالة 2: الملف هو مسار بسيط (اسم ملف فقط)
+    // يمكن أن يكون مسار بسيط أو عنوان URL مختصر
+    let objectPath = '';
+    
+    // تحقق مما إذا كان المدخل يبدو كمسار كامل
+    if (fileName.includes('/')) {
+      objectPath = fileName;
+    } else {
+      // نفترض أنه اسم ملف فقط، نضيفه إلى مسار epub/
+      objectPath = `epub/${fileName}`;
+    }
+    
+    // محاولة الحصول على رابط موقّع
+    console.log(`محاولة إنشاء رابط موقّع للملف: ${objectPath}`);
     const { data, error } = await supabase.storage
       .from('novels')
-      .createSignedUrl(`epub/${fileName}`, 3600);
+      .createSignedUrl(objectPath, 3600);
     
     if (error) {
       console.error(`فشل في الحصول على رابط التحميل: ${error.message}`);
@@ -84,21 +85,21 @@ export const getEpubDownloadUrl = async (fileName: string): Promise<string> => {
 /**
  * يقوم باستيراد ملف EPUB إلى Supabase
  */
-export const uploadEpubFile = async (file: File, novelId: string): Promise<string> => {
+export const uploadEpubFile = async (file: File, novelId: string, title: string): Promise<string> => {
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${novelId}.${fileExt}`;
+    // إنشاء اسم آمن للملف باستخدام العنوان
+    const safeFileName = createSafeEpubPath(title || novelId);
     
     // رفع الملف إلى Supabase Storage
     const { error } = await supabase.storage
       .from('novels')
-      .upload(`epub/${fileName}`, file);
+      .upload(safeFileName, file, { upsert: true });
       
     if (error) {
       throw new Error(`فشل في رفع الملف: ${error.message}`);
     }
     
-    return fileName;
+    return safeFileName;
   } catch (error) {
     console.error('خطأ في رفع ملف EPUB:', error);
     throw error;
