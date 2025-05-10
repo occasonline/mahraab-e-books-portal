@@ -37,39 +37,35 @@ const MarkdownImporter = ({ onImport, onCancel }: MarkdownImporterProps) => {
   };
 
   const parseMarkdown = async (content: string): Promise<Partial<NovelFormValues>> => {
-    // Enhanced parsing logic for better markdown extraction
+    // Enhanced parsing logic with proper null/undefined checks
     const lines = content.split('\n');
     let result: Partial<NovelFormValues> = {};
     
     // Try to extract title from the first heading
     const titleMatch = content.match(/^#\s+(.+)$/m);
-    if (titleMatch) {
+    if (titleMatch && titleMatch[1]) {
       result.title = titleMatch[1].trim();
     }
     
     // Try to extract author information
     const authorMatch = content.match(/author:\s*(.+)$/im) || content.match(/by\s*(.+)$/im);
-    if (authorMatch) {
+    if (authorMatch && authorMatch[1]) {
       result.author = authorMatch[1].trim();
     }
     
     // Extract description - assuming it's after the title but before other sections
     const descriptionMatch = content.match(/^([^#].+?)(?=\n#|\n\n#|\n\n\n)/s);
-    if (descriptionMatch) {
-      result.description = descriptionMatch[1].trim();
-      
-      // Use the first part as short description and the rest as full description
+    if (descriptionMatch && descriptionMatch[1]) {
       const description = descriptionMatch[1].trim();
-      const parts = description.split('\n\n');
-      if (parts.length > 1) {
-        result.description = parts[0];
-      }
+      
+      // Use the first paragraph as short description
+      result.description = description.split('\n\n')[0] || description;
     }
     
     // Set the full content as fullDescription
     // Remove potential metadata from the top (like title, author)
     let fullContent = content;
-    if (titleMatch) {
+    if (titleMatch && titleMatch[0]) {
       fullContent = fullContent.replace(titleMatch[0], '').trim();
     }
     
@@ -77,11 +73,11 @@ const MarkdownImporter = ({ onImport, onCancel }: MarkdownImporterProps) => {
     fullContent = fullContent.replace(/^---\n[\s\S]*?\n---\n/, '').trim();
     
     // Set the fullDescription to the entire processed content
-    result.fullDescription = fullContent;
+    result.fullDescription = fullContent || "";
     
     // Look for a sample section or extract first portion
-    const sampleMatch = content.match(/##\s+نموذج|عينة|مقتطف\s*\n([\s\S]+?)(?=\n##|$)/i);
-    if (sampleMatch) {
+    const sampleMatch = content.match(/##\s+(?:نموذج|عينة|مقتطف)\s*\n([\s\S]+?)(?=\n##|$)/i);
+    if (sampleMatch && sampleMatch[1]) {
       result.sample = sampleMatch[1].trim();
     } else {
       // If no explicit sample, take a portion from the beginning of the text
@@ -92,6 +88,8 @@ const MarkdownImporter = ({ onImport, onCancel }: MarkdownImporterProps) => {
         result.sample = firstParagraphs.length > 500 
           ? firstParagraphs.substring(0, 500) + '...' 
           : firstParagraphs;
+      } else {
+        result.sample = contentWithoutHeadings || "لا يوجد نموذج";
       }
     }
     
@@ -112,7 +110,29 @@ const MarkdownImporter = ({ onImport, onCancel }: MarkdownImporterProps) => {
     
     try {
       const content = await file.text();
+      
+      if (!content || content.trim() === '') {
+        throw new Error("الملف فارغ");
+      }
+      
       const novelData = await parseMarkdown(content);
+      
+      // التأكد من وجود البيانات الأساسية
+      if (!novelData.title) {
+        novelData.title = file.name.replace('.md', '');
+      }
+      
+      if (!novelData.author) {
+        novelData.author = "محراب التوبة";
+      }
+      
+      if (!novelData.description) {
+        novelData.description = "وصف مختصر للرواية";
+      }
+      
+      if (!novelData.sample) {
+        novelData.sample = "لا يوجد نموذج قراءة";
+      }
       
       toast({
         title: "تم استيراد الملف بنجاح",
@@ -124,7 +144,7 @@ const MarkdownImporter = ({ onImport, onCancel }: MarkdownImporterProps) => {
       console.error("Error parsing markdown file:", error);
       toast({
         title: "خطأ في معالجة الملف",
-        description: "حدث خطأ أثناء معالجة ملف Markdown",
+        description: "حدث خطأ أثناء معالجة ملف Markdown. تأكد من أن الملف بالتنسيق الصحيح.",
         variant: "destructive"
       });
     } finally {
