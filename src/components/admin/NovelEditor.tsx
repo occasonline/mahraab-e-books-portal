@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import ChapterEditor from "./ChapterEditor";
 import { novelSchema, NovelFormValues } from "@/schemas/novelSchema";
-import { FileText } from "lucide-react";
+import { FileText, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { getNovelById, createNovel, updateNovel } from "@/services/novelService";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 // Import the form field components
 import NovelBasicFields from "./novel/NovelBasicFields";
@@ -32,6 +34,7 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
   const [showMarkdownImporter, setShowMarkdownImporter] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const supabaseConnected = isSupabaseConfigured();
   
   // تهيئة نموذج التحرير
   const form = useForm<NovelFormValues>({
@@ -55,6 +58,15 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
   useEffect(() => {
     const fetchNovelData = async () => {
       if (novelId && novelId !== "new") {
+        if (!supabaseConnected) {
+          toast({
+            variant: "destructive",
+            title: "خطأ في الاتصال بقاعدة البيانات",
+            description: "تعذر الاتصال بـ Supabase. يرجى التحقق من إعدادات الاتصال.",
+          });
+          return;
+        }
+        
         setLoading(true);
         try {
           const novelData = await getNovelById(novelId);
@@ -87,9 +99,19 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
     };
 
     fetchNovelData();
-  }, [novelId, form, toast]);
+  }, [novelId, form, toast, supabaseConnected]);
 
   const onSubmit = async (data: NovelFormValues) => {
+    // التحقق من اتصال Supabase قبل محاولة الحفظ
+    if (!supabaseConnected) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في حفظ البيانات",
+        description: "تعذر الاتصال بقاعدة البيانات Supabase. يرجى التحقق من إعدادات الاتصال من لوحة التحكم.",
+      });
+      return;
+    }
+    
     setLoading(true);
     try {
       if (novelId === "new") {
@@ -137,6 +159,17 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
 
   return (
     <div className="space-y-6">
+      {!supabaseConnected && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>تنبيه: لا يوجد اتصال بقاعدة البيانات</AlertTitle>
+          <AlertDescription>
+            لم يتم العثور على إعدادات الاتصال بـ Supabase. يرجى التأكد من تفعيل اتصال Supabase من لوحة التحكم.
+            لن تتمكن من حفظ البيانات حتى يتم تكوين الاتصال بشكل صحيح.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-heading font-bold text-mihrab">
           {novelId === "new" ? "إضافة رواية جديدة" : "تعديل الرواية"}
@@ -199,7 +232,7 @@ const NovelEditor = ({ novelId, onCancel, onSave }: NovelEditorProps) => {
               <Button 
                 type="submit" 
                 className="bg-mihrab hover:bg-mihrab-dark"
-                disabled={loading}
+                disabled={loading || !supabaseConnected}
               >
                 {loading 
                   ? "جاري الحفظ..." 

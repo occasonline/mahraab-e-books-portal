@@ -7,7 +7,13 @@ const ENV = (window as any).ENV || {};
 const supabaseUrl = ENV.VITE_SUPABASE_URL;
 const supabaseKey = ENV.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
+// فحص توفر بيانات الاتصال
+export const isSupabaseConfigured = () => {
+  return Boolean(supabaseUrl && supabaseKey);
+};
+
+// طباعة رسالة خطأ في حالة عدم توفر بيانات الاتصال
+if (!isSupabaseConfigured()) {
   console.error('خطأ: متغيرات البيئة لـ Supabase غير متوفرة. تأكد من تفعيل اتصال Supabase من لوحة التحكم.');
 }
 
