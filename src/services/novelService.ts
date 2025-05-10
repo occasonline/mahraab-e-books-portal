@@ -15,7 +15,14 @@ export const getNovels = async () => {
     throw error;
   }
   
-  return data as Novel[];
+  // تحويل البيانات المسترجعة إلى النوع Novel
+  return data.map(novel => ({
+    ...novel,
+    published_date: novel.created_at, // استخدم تاريخ الإنشاء كتاريخ نشر مؤقت
+    status: (novel.status as 'published' | 'draft') || 'draft',
+    is_premium: novel.is_premium || false,
+    allow_download: novel.allow_download !== false, // افتراضي true
+  })) as Novel[];
 };
 
 // استرجاع رواية واحدة بواسطة المعرف
@@ -31,7 +38,14 @@ export const getNovelById = async (id: string) => {
     throw error;
   }
   
-  return data as Novel;
+  // تحويل البيانات المسترجعة إلى النوع Novel
+  return {
+    ...data,
+    published_date: data.created_at, // استخدم تاريخ الإنشاء كتاريخ نشر مؤقت
+    status: (data.status as 'published' | 'draft') || 'draft',
+    is_premium: data.is_premium || false,
+    allow_download: data.allow_download !== false, // افتراضي true
+  } as Novel;
 };
 
 // إنشاء رواية جديدة
@@ -61,7 +75,14 @@ export const createNovel = async (novelData: NovelFormValues) => {
     throw error;
   }
   
-  return data[0] as Novel;
+  // تحويل البيانات المسترجعة إلى النوع Novel
+  return {
+    ...data[0],
+    published_date: data[0].created_at, // استخدم تاريخ الإنشاء كتاريخ نشر مؤقت
+    status: (data[0].status as 'published' | 'draft') || 'draft',
+    is_premium: data[0].is_premium || false,
+    allow_download: data[0].allow_download !== false, // افتراضي true
+  } as Novel;
 };
 
 // تحديث رواية موجودة
@@ -92,7 +113,14 @@ export const updateNovel = async (id: string, novelData: NovelFormValues) => {
     throw error;
   }
   
-  return data[0] as Novel;
+  // تحويل البيانات المسترجعة إلى النوع Novel
+  return {
+    ...data[0],
+    published_date: data[0].created_at, // استخدم تاريخ الإنشاء كتاريخ نشر مؤقت
+    status: (data[0].status as 'published' | 'draft') || 'draft',
+    is_premium: data[0].is_premium || false,
+    allow_download: data[0].allow_download !== false, // افتراضي true
+  } as Novel;
 };
 
 // حذف رواية
@@ -135,5 +163,12 @@ export const updateNovelStatus = async (id: string, status: 'published' | 'draft
     throw error;
   }
   
-  return data[0] as Novel;
+  // تحويل البيانات المسترجعة إلى النوع Novel
+  return {
+    ...data[0],
+    published_date: data[0].created_at, // استخدم تاريخ الإنشاء كتاريخ نشر مؤقت
+    status: (data[0].status as 'published' | 'draft') || 'draft',
+    is_premium: data[0].is_premium || false,
+    allow_download: data[0].allow_download !== false, // افتراضي true
+  } as Novel;
 };

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Book as EpubBook } from 'epubjs';
+import * as epubjs from 'epubjs';
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,9 @@ import { Progress } from "@/components/ui/progress";
 import { Moon, Sun, Type, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import './epub-reader.css';
+
+// تعريف نوع EpubBook للاستخدام في الكومبوننت
+type EpubBook = ReturnType<typeof epubjs.Book>;
 
 interface EpubReaderProps {
   url: string;
@@ -44,7 +47,7 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
         
         // تهيئة الكتاب باستخدام URL
         if (!book.current) {
-          book.current = window.ePub ? window.ePub(url) : new EpubBook(url);
+          book.current = new epubjs.Book(url);
         }
         
         // إنشاء المعرض
@@ -85,10 +88,15 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
               
               // تقدير رقم الصفحة الحالي
               const currentCfi = location.start.cfi;
-              book.current?.locations.percentageFromCfi(currentCfi)
-                .then((percentage: number) => {
-                  setCurrentPage(Math.ceil(percentage * totalPages));
-                });
+              if (book.current && book.current.locations && typeof book.current.locations.percentageFromCfi === 'function') {
+                book.current.locations.percentageFromCfi(currentCfi)
+                  .then((percentage: number) => {
+                    setCurrentPage(Math.ceil(percentage * totalPages));
+                  })
+                  .catch(error => {
+                    console.error('خطأ في تحديد موقع الصفحة:', error);
+                  });
+              }
             }
           });
           
@@ -100,20 +108,29 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
           });
           
           // تحديد عدد الصفحات الإجمالي بعد تحميل الكتاب
-          const pageList = await book.current.locations.generate(1024);
-          const pageCount = Math.ceil(book.current.locations.length() / 1024) || 0;
-          setTotalPages(pageCount > 0 ? pageCount : 100); // استخدام 100 كافتراضي إذا تعذر تقدير الصفحات
+          try {
+            const pageList = await book.current.locations.generate(1024);
+            const pageCount = Math.ceil(book.current.locations.length() / 1024) || 0;
+            setTotalPages(pageCount > 0 ? pageCount : 100); // استخدام 100 كافتراضي إذا تعذر تقدير الصفحات
+          } catch (error) {
+            console.error('خطأ في إنشاء قائمة الصفحات:', error);
+            setTotalPages(100);
+          }
           
           // تطبيق الاتجاه من اليمين إلى اليسار للمحتوى العربي
-          const meta = await book.current.loaded.metadata;
-          const isRTL = meta.language === 'ar' || meta.direction === 'rtl';
-          if (isRTL) {
-            rendition.current.spread('none', { direction: 'rtl' });
-            const doc = rendition.current.getContents()[0]?.document;
-            if (doc) {
-              doc.documentElement.style.direction = 'rtl';
-              doc.documentElement.style.textAlign = 'right';
+          try {
+            const meta = await book.current.loaded.metadata;
+            const isRTL = meta.language === 'ar' || (meta.direction as any) === 'rtl';
+            if (isRTL) {
+              rendition.current.spread('none', { direction: 'rtl' });
+              const doc = rendition.current.getContents()[0]?.document;
+              if (doc) {
+                doc.documentElement.style.direction = 'rtl';
+                doc.documentElement.style.textAlign = 'right';
+              }
             }
+          } catch (error) {
+            console.error('خطأ في تحديد اتجاه النص:', error);
           }
         }
         
@@ -132,7 +149,7 @@ const EpubReader = ({ url, title, isOpen, onClose }: EpubReaderProps) => {
         rendition.current.destroy();
       }
     };
-  }, [isOpen, url, STORAGE_KEY]);
+  }, [isOpen, url, STORAGE_KEY, totalPages]);
   
   // تطبيق إعدادات العرض (الوضع المظلم، حجم الخط)
   const setReaderStyles = async () => {

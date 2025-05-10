@@ -1,3 +1,4 @@
+
 export interface Database {
   public: {
     Tables: {
@@ -15,6 +16,8 @@ export interface Database {
           tags: string[] | null
           sample: string | null
           is_premium: boolean | null
+          allow_download: boolean | null
+          epub_url: string | null
         }
         Insert: {
           id?: string
@@ -29,6 +32,8 @@ export interface Database {
           tags?: string[] | null
           sample?: string | null
           is_premium?: boolean | null
+          allow_download?: boolean | null
+          epub_url?: string | null
         }
         Update: {
           id?: string
@@ -43,6 +48,8 @@ export interface Database {
           tags?: string[] | null
           sample?: string | null
           is_premium?: boolean | null
+          allow_download?: boolean | null
+          epub_url?: string | null
         }
       }
     }
@@ -67,15 +74,41 @@ export interface Novel {
   description: string;
   full_description: string | null;
   image_url: string | null;
-  status: string;
+  status: 'published' | 'draft';
   author: string;
   published_date: string | null;
   category: string;
   tags: string[] | null;
   sample: string | null;
   is_premium: boolean;
+  allow_download: boolean;
   created_at: string | null;
-  epub_url: string | null; // إضافة حقل لعنوان ملف EPUB
+  epub_url: string | null;
+}
+
+export interface Chapter {
+  id: string;
+  novel_id: string;
+  title: string;
+  content: string;
+  order: number;
+  status: 'published' | 'draft';
+  created_at: string | null;
+}
+
+export interface WebsiteSettings {
+  id: string;
+  site_name: string;
+  site_description: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  facebook: string | null;
+  twitter: string | null;
+  instagram: string | null;
+  created_at: string | null;
 }
 
 export type Json =
