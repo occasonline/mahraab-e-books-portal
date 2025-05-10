@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -137,6 +136,79 @@ export interface Database {
           twitter?: string | null
           instagram?: string | null
           created_at?: string
+        }
+        Relationships: []
+      }
+      project_content: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_content_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      projects: {
+        Row: {
+          cover_image: string | null
+          created_at: string
+          format: string | null
+          id: string
+          progress: number | null
+          status: string | null
+          template_id: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cover_image?: string | null
+          created_at?: string
+          format?: string | null
+          id?: string
+          progress?: number | null
+          status?: string | null
+          template_id?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cover_image?: string | null
+          created_at?: string
+          format?: string | null
+          id?: string
+          progress?: number | null
+          status?: string | null
+          template_id?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

@@ -38,7 +38,7 @@ export const getChapterById = async (id: string) => {
 export const createChapter = async (chapterData: Omit<Chapter, 'id' | 'created_at'>) => {
   const { data, error } = await supabase
     .from('chapters')
-    .insert([chapterData])
+    .insert([chapterData] as any)
     .select();
   
   if (error) {
@@ -56,7 +56,7 @@ export const updateChapter = async (
 ) => {
   const { data, error } = await supabase
     .from('chapters')
-    .update(chapterData)
+    .update(chapterData as any)
     .eq('id', id)
     .select();
   
@@ -87,7 +87,7 @@ export const deleteChapter = async (id: string) => {
 export const updateChapterStatus = async (id: string, status: 'published' | 'draft') => {
   const { data, error } = await supabase
     .from('chapters')
-    .update({ status })
+    .update({ status } as any)
     .eq('id', id)
     .select();
   

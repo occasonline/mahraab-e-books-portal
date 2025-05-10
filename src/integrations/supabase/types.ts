@@ -9,6 +9,92 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chapters: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          novel_id: string
+          order: number
+          status: string | null
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          novel_id: string
+          order: number
+          status?: string | null
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          novel_id?: string
+          order?: number
+          status?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapters_novel_id_fkey"
+            columns: ["novel_id"]
+            isOneToOne: false
+            referencedRelation: "novels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      novels: {
+        Row: {
+          allow_download: boolean | null
+          author: string
+          category: string
+          created_at: string | null
+          description: string
+          full_description: string
+          id: string
+          image_url: string | null
+          is_premium: boolean | null
+          sample: string | null
+          status: string | null
+          tags: string[] | null
+          title: string
+        }
+        Insert: {
+          allow_download?: boolean | null
+          author: string
+          category: string
+          created_at?: string | null
+          description: string
+          full_description: string
+          id?: string
+          image_url?: string | null
+          is_premium?: boolean | null
+          sample?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+        }
+        Update: {
+          allow_download?: boolean | null
+          author?: string
+          category?: string
+          created_at?: string | null
+          description?: string
+          full_description?: string
+          id?: string
+          image_url?: string | null
+          is_premium?: boolean | null
+          sample?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+        }
+        Relationships: []
+      }
       project_content: {
         Row: {
           content: string
@@ -80,6 +166,51 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      website_settings: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          facebook: string | null
+          id: string
+          instagram: string | null
+          phone: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          site_description: string | null
+          site_name: string
+          twitter: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          phone?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          site_description?: string | null
+          site_name: string
+          twitter?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          phone?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          site_description?: string | null
+          site_name?: string
+          twitter?: string | null
         }
         Relationships: []
       }
