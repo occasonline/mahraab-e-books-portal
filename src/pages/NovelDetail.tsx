@@ -254,7 +254,7 @@ const NovelDetail = () => {
               
               <TabsContent value="description" className="p-6">
                 <h2 className="text-xl font-heading font-bold text-mihrab mb-4">عن الرواية</h2>
-                <div className="prose prose-lg max-w-none text-mihrab-dark/80 leading-relaxed whitespace-pre-line">
+                <div className="prose prose-lg max-w-none text-mihrab-dark/80 leading-relaxed whitespace-pre-line text-right">
                   {novel.full_description}
                 </div>
               </TabsContent>
@@ -313,6 +313,8 @@ const NovelDetail = () => {
                   style={{
                     fontSize: `${readerSettings.fontSize}px`,
                     lineHeight: readerSettings.lineHeight,
+                    textAlign: 'right',
+                    direction: 'rtl'
                   }}
                 >
                   <p className="mb-4 font-heading font-bold text-center text-2xl">{novel.title}</p>
