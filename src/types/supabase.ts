@@ -1,4 +1,3 @@
-
 export interface Database {
   public: {
     Tables: {
@@ -17,7 +16,7 @@ export interface Database {
           sample: string | null
           is_premium: boolean | null
           allow_download: boolean | null
-          epub_url: string | null
+          epub_url: string | null  // Add the epub_url field here
         }
         Insert: {
           id?: string
@@ -33,7 +32,7 @@ export interface Database {
           sample?: string | null
           is_premium?: boolean | null
           allow_download?: boolean | null
-          epub_url?: string | null
+          epub_url?: string | null  // Add the epub_url field here
         }
         Update: {
           id?: string
@@ -49,7 +48,7 @@ export interface Database {
           sample?: string | null
           is_premium?: boolean | null
           allow_download?: boolean | null
-          epub_url?: string | null
+          epub_url?: string | null  // Add the epub_url field here
         }
       }
     }
@@ -83,7 +82,7 @@ export interface Novel {
   is_premium: boolean;
   allow_download: boolean;
   created_at: string | null;
-  epub_url: string | null;
+  epub_url: string | null;  // Add the epub_url field here
 }
 
 export interface Chapter {
