@@ -9,7 +9,8 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
-import { ChevronRight, ChevronLeft } from "lucide-react"; 
+import { ChevronRight, ChevronLeft, Download } from "lucide-react"; 
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface NovelReaderProps {
   title: string;
@@ -119,12 +120,96 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     setCurrentPage(e.data);
   };
 
+  // Export functions
+  const exportToWord = () => {
+    // Create a blob with HTML content
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html dir="rtl">
+      <head>
+        <meta charset="UTF-8">
+        <title>${title}</title>
+        <style>
+          body { font-family: 'Arial', sans-serif; text-align: right; direction: rtl; }
+          h1 { color: #7A6C5D; text-align: center; font-size: 24pt; margin-bottom: 50px; }
+          p { line-height: 1.6; font-size: 12pt; }
+          .page-break { page-break-after: always; }
+        </style>
+      </head>
+      <body>
+        <h1>${title}</h1>
+        ${content.split('\n\n').map(paragraph => `<p>${paragraph}</p>`).join('')}
+      </body>
+      </html>
+    `;
+    
+    const blob = new Blob([htmlContent], {type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToPDF = () => {
+    // Similar approach but for PDF
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html dir="rtl">
+      <head>
+        <meta charset="UTF-8">
+        <title>${title}</title>
+        <style>
+          body { font-family: 'Arial', sans-serif; text-align: right; direction: rtl; }
+          h1 { color: #7A6C5D; text-align: center; font-size: 24pt; margin-bottom: 50px; }
+          p { line-height: 1.6; font-size: 12pt; }
+          .page-break { page-break-after: always; }
+        </style>
+      </head>
+      <body>
+        <h1>${title}</h1>
+        ${content.split('\n\n').map(paragraph => `<p>${paragraph}</p>`).join('')}
+      </body>
+      </html>
+    `;
+    
+    const blob = new Blob([htmlContent], {type: 'application/pdf'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="w-[90vw] max-w-[1000px] h-[80vh] max-h-[800px] p-0 flex flex-col">
         <DialogHeader className="px-4 py-2 flex flex-row justify-between items-center">
           <DialogTitle className="text-mihrab text-xl">{title}</DialogTitle>
-          <DialogClose className="text-mihrab hover:text-mihrab-dark" />
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Download className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={exportToWord}>
+                  تنزيل بصيغة Word
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToPDF}>
+                  تنزيل بصيغة PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DialogClose className="text-mihrab hover:text-mihrab-dark" />
+          </div>
         </DialogHeader>
         
         <div className="flex-1 relative overflow-hidden bg-mihrab-beige/30">
