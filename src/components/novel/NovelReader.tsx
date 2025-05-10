@@ -1,6 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +12,7 @@ import {
   DialogClose,
   DialogDescription
 } from "@/components/ui/dialog";
-import { ChevronRight, ChevronLeft, Download } from "lucide-react"; 
+import { ChevronRight, ChevronLeft, Download, Moon, Sun, Type } from "lucide-react"; 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   Pagination,
@@ -29,15 +32,15 @@ interface NovelReaderProps {
 }
 
 // Single page component
-const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: number }>((props, ref) => {
+const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: number; fontSize: string }>((props, ref) => {
   return (
     <div 
       ref={ref} 
-      className="bg-mihrab-cream p-4 shadow-md"
+      className="bg-mihrab-cream p-4 shadow-md dark:bg-mihrab-dark dark:text-white"
       style={{ 
         width: '100%', 
         height: '100%',
-        backgroundImage: 'linear-gradient(to right, #f5f3e8, #fffcf0)'
+        backgroundImage: 'linear-gradient(to right, #f5f3e8, #fffcf0)',
       }}
     >
       <div
@@ -47,17 +50,17 @@ const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: num
       >
         {props.pageNumber === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <h2 className="text-3xl font-amiri font-bold text-mihrab mb-4 text-center">
+            <h2 className={`text-3xl font-amiri font-bold text-mihrab mb-4 text-center dark:text-mihrab-cream`}>
               {props.content}
             </h2>
-            <p className="text-mihrab-dark/70 text-center font-amiri">انقر على حافة الصفحة للتنقل</p>
+            <p className="text-mihrab-dark/70 text-center font-amiri dark:text-mihrab-cream/70">انقر على حافة الصفحة للتنقل</p>
           </div>
         ) : (
           <div className="h-full overflow-hidden flex flex-col">
-            <p className="flex-1 overflow-hidden whitespace-pre-line leading-relaxed font-amiri text-mihrab-dark">
+            <p className={`flex-1 overflow-hidden whitespace-pre-line leading-relaxed font-amiri text-mihrab-dark ${props.fontSize} dark:text-mihrab-cream`}>
               {props.content}
             </p>
-            <span className="self-end pr-4 pb-4 text-sm opacity-60">{props.pageNumber}</span>
+            <span className="self-end pr-4 pb-4 text-sm opacity-60 dark:text-mihrab-cream/60">{props.pageNumber}</span>
           </div>
         )}
       </div>
@@ -68,13 +71,16 @@ const Page = React.forwardRef<HTMLDivElement, { content: string; pageNumber: num
 Page.displayName = "Page";
 
 const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
+  const STORAGE_KEY = `novel-reader-${title}`;
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [fontSize, setFontSize] = useState<string>("text-lg"); // Default font size
   const bookRef = useRef(null);
   
-  // Split content into chunks for pages with improved algorithm
-  const splitContentIntoPages = (text: string): string[] => {
-    if (!text) return [];
+  // Split content into chunks for pages with improved algorithm using useMemo
+  const splitContentIntoPages = useMemo(() => {
+    if (!content) return [];
     
     const charsPerPage = 350; // Reduced for better Arabic text display
     const pages = [];
@@ -83,7 +89,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     pages.push(title);
     
     // Split by paragraphs first
-    const paragraphs = text.split('\n\n');
+    const paragraphs = content.split('\n\n');
     let currentPageContent = '';
     
     // Group paragraphs into pages
@@ -107,18 +113,42 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
     }
     
     return pages;
-  };
+  }, [content, title]);
   
-  const pages = splitContentIntoPages(content);
+  const pages = splitContentIntoPages;
 
   // Set total pages when component mounts or content changes
   useEffect(() => {
     setTotalPages(pages.length);
-  }, [content, pages.length]);
+    
+    // Load saved page from localStorage
+    const savedPage = localStorage.getItem(STORAGE_KEY);
+    if (savedPage !== null) {
+      const pageNum = parseInt(savedPage, 10);
+      // Validate the page number is within bounds
+      if (!isNaN(pageNum) && pageNum >= 0 && pageNum < pages.length) {
+        setCurrentPage(pageNum);
+        // Flip to the saved page after a slight delay to ensure the book is ready
+        setTimeout(() => {
+          if (bookRef.current) {
+            (bookRef.current as any).pageFlip().flip(pageNum);
+          }
+        }, 300);
+      }
+    }
+    
+    // Check system preference for dark mode
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setIsDarkMode(prefersDark);
+    
+  }, [pages, STORAGE_KEY]);
 
   // Handle page changing event
   const handlePageChange = (e: any) => {
-    setCurrentPage(e.data);
+    const newPage = e.data;
+    setCurrentPage(newPage);
+    // Save current page to localStorage
+    localStorage.setItem(STORAGE_KEY, newPage.toString());
   };
 
   // Navigation functions that respect RTL direction
@@ -139,6 +169,26 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
       (bookRef.current as any).pageFlip().flip(pageNumber);
     }
   };
+
+  // Toggle dark mode function
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
+  };
+  
+  // Toggle font size function
+  const toggleFontSize = () => {
+    // Cycle through font sizes
+    setFontSize(current => {
+      if (current === "text-lg") return "text-xl";
+      if (current === "text-xl") return "text-2xl";
+      return "text-lg";
+    });
+  };
+
+  // Calculate reading progress percentage
+  const progressPercentage = totalPages > 1 
+    ? Math.round((currentPage / (totalPages - 1)) * 100)
+    : 0;
 
   // Export functions
   const exportToWord = () => {
@@ -328,10 +378,31 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[90vw] max-w-[1000px] h-[80vh] max-h-[800px] p-0 flex flex-col" dir="rtl">
+      <DialogContent 
+        className={`w-[90vw] max-w-[1000px] h-[80vh] max-h-[800px] p-0 flex flex-col ${isDarkMode ? 'dark' : ''}`} 
+        dir="rtl"
+      >
         <DialogHeader className="px-4 py-2 flex flex-row justify-between items-center">
-          <DialogTitle className="text-mihrab text-xl font-amiri">{title}</DialogTitle>
+          <DialogTitle className="text-mihrab text-xl font-amiri dark:text-mihrab-cream">{title}</DialogTitle>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={toggleDarkMode}
+              title={isDarkMode ? "وضع النهار" : "الوضع المظلم"}
+            >
+              {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={toggleFontSize}
+              title="تغيير حجم الخط"
+            >
+              <Type className="h-4 w-4" />
+            </Button>
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -347,15 +418,15 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <DialogClose className="text-mihrab hover:text-mihrab-dark" />
+            <DialogClose className="text-mihrab hover:text-mihrab-dark dark:text-mihrab-cream dark:hover:text-white" />
           </div>
         </DialogHeader>
         
-        <DialogDescription className="text-center text-xs pt-0 mt-0">
+        <DialogDescription className="text-center text-xs pt-0 mt-0 dark:text-mihrab-cream/70">
           استخدم الأزرار أسفل الكتاب أو انقر على جانبي الصفحة للتنقل بين الصفحات
         </DialogDescription>
         
-        <div className="flex-1 relative overflow-hidden bg-mihrab-beige/30">
+        <div className="flex-1 relative overflow-hidden bg-mihrab-beige/30 dark:bg-mihrab-dark/60">
           <div dir="rtl" className="absolute inset-0 flex justify-center items-center">
             <div className="w-full h-full max-w-[900px] max-h-[700px]">
               <HTMLFlipBook
@@ -372,7 +443,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 mobileScrollSupport={true}
                 onFlip={handlePageChange}
                 className="book-render"
-                startPage={0}
+                startPage={currentPage}
                 style={{ padding: '20px' }}
                 drawShadow={true}
                 flippingTime={1000}
@@ -387,15 +458,26 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
                 renderOnlyPageLengthChange={false}
               >
                 {pages.map((pageContent, index) => (
-                  <Page key={index} content={pageContent} pageNumber={index} />
+                  <Page key={index} content={pageContent} pageNumber={index} fontSize={fontSize} />
                 ))}
               </HTMLFlipBook>
             </div>
           </div>
           
           <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-4">
-            <div className="text-mihrab-dark bg-white/80 px-3 py-1 rounded-full text-sm">
+            <div className="text-mihrab-dark bg-white/80 px-3 py-1 rounded-full text-sm dark:bg-mihrab-dark/80 dark:text-white">
               الصفحة {currentPage + 1} من {totalPages}
+            </div>
+            
+            {/* Progress bar */}
+            <div className="w-64 mx-auto px-4">
+              <Progress 
+                value={progressPercentage} 
+                className="h-2 dark:bg-mihrab-dark" 
+              />
+              <div className="text-xs text-center mt-1 text-mihrab-dark/70 dark:text-mihrab-cream/70">
+                {progressPercentage}% مقروء
+              </div>
             </div>
             
             <Pagination>
@@ -424,7 +506,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
               <Button 
                 onClick={nextPage}
                 variant="outline" 
-                className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
+                className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
                 disabled={currentPage === 0}
               >
                 <ChevronRight size={16} />
@@ -433,7 +515,7 @@ const NovelReader = ({ title, content, isOpen, onClose }: NovelReaderProps) => {
               <Button 
                 onClick={prevPage}
                 variant="outline" 
-                className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1"
+                className="bg-white/80 border-mihrab text-mihrab flex items-center gap-1 dark:bg-mihrab-dark/80 dark:text-white dark:border-mihrab-cream"
                 disabled={currentPage === pages.length - 1}
               >
                 الصفحة التالية
