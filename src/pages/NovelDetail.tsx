@@ -1,85 +1,79 @@
 
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-
-interface Novel {
-  id: string;
-  title: string;
-  image: string;
-  author: string;
-  description: string;
-  fullDescription: string;
-  publishDate: string;
-  rating: number;
-  pageCount: number;
-  category: string;
-  tags: string[];
-  isPremium: boolean;
-  sample: string;
-}
-
-// Mock data for a specific novel
-const novelData: Novel = {
-  id: "1",
-  title: "في محراب التوبة",
-  image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-  author: "محراب التوبة",
-  description: "رحلة روحانية في أعماق النفس البشرية، تكشف أسرار التوبة والعودة إلى الذات الحقيقية.",
-  fullDescription: "«في محراب التوبة» رواية فلسفية روحانية تأخذ القارئ في رحلة عميقة داخل أغوار النفس البشرية، متتبعة مسار شخصية رئيسية تمر بتحولات جذرية في رؤيتها للعالم والوجود. بعد سنوات من الانغماس في عالم المادة والسعي وراء الملذات، يجد البطل نفسه في مفترق طرق وجودي حين تهتز كل قناعاته إثر حادثة مفاجئة تقلب حياته رأساً على عقب.\n\nتبدأ الرواية بلحظة سقوط واكتشاف الفراغ الروحي، ثم تنطلق في مسار تصاعدي عبر طريق التوبة والعودة إلى الفطرة النقية. خلال هذه الرحلة، يلتقي البطل بشخصيات متنوعة تمثل محطات هامة في طريق التحول، بدءاً من الشيخ الحكيم الذي يصبح مرشده الروحي، مروراً بأشخاص يمثلون تحديات وعقبات تختبر صدق توبته وعزيمته.\n\nتتناول الرواية بعمق فلسفي قضايا الوجود الإنساني والصراع بين النفس الأمارة بالسوء والنفس المطمئنة، متسائلة عن معنى الحياة الحقيقي ومفهوم السعادة الأصيل. وعبر فصولها المتتالية، تقدم رؤية متكاملة لمفهوم التوبة لا كمجرد ندم على الماضي، بل كتحول جذري في الوعي والإدراك يفتح آفاقاً جديدة للروح المتعطشة للمعرفة والسلام الداخلي.",
-  publishDate: "2023-06-15",
-  rating: 4.8,
-  pageCount: 342,
-  category: "فلسفي",
-  tags: ["روحانية", "فلسفة", "تطوير ذاتي", "عرفان"],
-  isPremium: false,
-  sample: "استيقظ «سالم» على صوت المنبه المزعج كعادته كل صباح. لكن هذا الصباح كان مختلفاً. شعر بثقل غريب في صدره، وكأن هناك جبلاً جاثماً عليه. نظر إلى السقف للحظات طويلة متسائلاً: «هل هذا كل شيء؟ هل هذا ما خلقت لأجله؟»\n\nثلاثة عقود من العمر مرت كومضة برق... دوامة لا تنتهي من الركض وراء مكاسب مادية وملذات عابرة، ثم إذ بالسؤال الوجودي يقف شامخاً أمام عينيه كجبل لا يمكن تجاوزه.\n\nارتدى ملابسه ببطء غير معتاد، وخرج إلى عمله في الشركة الاستثمارية التي قضى فيها عشر سنوات من حياته. لكنه في ذلك اليوم كان كمن يرى العالم لأول مرة. الوجوه الشاحبة في مترو الأنفاق، العيون الزجاجية المنهكة التي تحدق في شاشات الهواتف، الضجيج الذي لا ينقطع... كل شيء بدا غريباً وخالياً من المعنى.\n\n«ماذا لو توقفت عن الركض؟» سأل نفسه وهو يدخل مبنى الشركة الزجاجي الشاهق."
-};
-
-// Mock comments
-const comments = [
-  {
-    id: '1',
-    userName: 'أحمد محمد',
-    date: '2023-11-10',
-    rating: 5,
-    content: 'رواية مؤثرة جداً وعميقة. استطاع الكاتب أن ينقل التجربة الروحانية بأسلوب أدبي رائع. أنصح بشدة بقراءتها.'
-  },
-  {
-    id: '2',
-    userName: 'سارة خالد',
-    date: '2023-10-25',
-    rating: 4,
-    content: 'التجربة الفلسفية في الرواية فريدة من نوعها، وإن كنت أرى أن بعض الفصول كانت طويلة بعض الشيء. مع ذلك، استمتعت كثيراً بالقراءة.'
-  },
-  {
-    id: '3',
-    userName: 'محمد العنزي',
-    date: '2023-09-15',
-    rating: 5,
-    content: 'من أفضل ما قرأت في الأدب الروحاني. عالم فريد من الأفكار والتأملات التي تلامس شغاف القلب.'
-  }
-];
+import { getNovelById } from "@/services/novelService";
+import { Novel } from "@/types/supabase";
 
 const NovelDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
-  
-  // Assuming you would fetch the specific novel based on the id
-  // For now we'll just use the mock data
-  const novel = novelData;
+  const navigate = useNavigate();
+  const [novel, setNovel] = useState<Novel | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const [readerSettings, setReaderSettings] = useState({
     fontSize: 16,
     lineHeight: 1.6,
     theme: 'light',
   });
+
+  // Fetch the specific novel based on the id
+  useEffect(() => {
+    const fetchNovel = async () => {
+      if (!id) {
+        navigate('/novels');
+        return;
+      }
+      
+      try {
+        const fetchedNovel = await getNovelById(id);
+        setNovel(fetchedNovel);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching novel:", error);
+        toast({
+          variant: "destructive",
+          title: "خطأ في تحميل الرواية",
+          description: "لم نتمكن من تحميل بيانات الرواية. يرجى المحاولة مرة أخرى لاحقاً.",
+        });
+        setLoading(false);
+      }
+    };
+
+    fetchNovel();
+  }, [id, navigate, toast]);
+  
+  // Mock comments for now - could be replaced with real data in future
+  const comments = [
+    {
+      id: '1',
+      userName: 'أحمد محمد',
+      date: '2023-11-10',
+      rating: 5,
+      content: 'رواية مؤثرة جداً وعميقة. استطاع الكاتب أن ينقل التجربة الروحانية بأسلوب أدبي رائع. أنصح بشدة بقراءتها.'
+    },
+    {
+      id: '2',
+      userName: 'سارة خالد',
+      date: '2023-10-25',
+      rating: 4,
+      content: 'التجربة الفلسفية في الرواية فريدة من نوعها، وإن كنت أرى أن بعض الفصول كانت طويلة بعض الشيء. مع ذلك، استمتعت كثيراً بالقراءة.'
+    },
+    {
+      id: '3',
+      userName: 'محمد العنزي',
+      date: '2023-09-15',
+      rating: 5,
+      content: 'من أفضل ما قرأت في الأدب الروحاني. عالم فريد من الأفكار والتأملات التي تلامس شغاف القلب.'
+    }
+  ];
   
   const handleStartReading = () => {
-    if (novel.isPremium) {
+    if (novel?.is_premium) {
       toast({
         title: "هذه الرواية حصرية",
         description: "يرجى الترقية إلى العضوية المدفوعة للوصول إلى هذه الرواية.",
@@ -87,7 +81,7 @@ const NovelDetail = () => {
     } else {
       toast({
         title: "تم فتح الرواية",
-        description: "استمتع بقراءة رواية في محراب التوبة!",
+        description: `استمتع بقراءة رواية ${novel?.title}!`,
       });
     }
   };
@@ -116,6 +110,34 @@ const NovelDetail = () => {
     }
     return <div className="flex">{stars}</div>;
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="bg-mihrab-cream py-12">
+          <div className="container mx-auto px-4 text-center">
+            <p>جاري تحميل بيانات الرواية...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!novel) {
+    return (
+      <Layout>
+        <div className="bg-mihrab-cream py-12">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-2xl font-heading font-bold text-mihrab mb-4">الرواية غير موجودة</h2>
+            <p className="mb-6">لم نتمكن من العثور على الرواية المطلوبة</p>
+            <Button onClick={() => navigate('/novels')} className="bg-mihrab hover:bg-mihrab-dark">
+              العودة إلى الروايات
+            </Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
   
   return (
     <Layout>
@@ -127,11 +149,11 @@ const NovelDetail = () => {
               <div className="md:w-1/3 p-6">
                 <div className="relative aspect-[3/4] max-w-xs mx-auto">
                   <img 
-                    src={novel.image} 
+                    src={novel.image_url || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"} 
                     alt={novel.title}
                     className="w-full h-full object-cover rounded-lg shadow-md"
                   />
-                  {novel.isPremium && (
+                  {novel.is_premium && (
                     <div className="absolute top-4 right-4 bg-mihrab-gold text-white text-xs font-bold px-3 py-1 rounded-full">
                       حصري
                     </div>
@@ -146,15 +168,15 @@ const NovelDetail = () => {
                 <p className="text-mihrab-dark/70 mb-4">تأليف: {novel.author}</p>
                 
                 <div className="flex items-center mb-4">
-                  {renderStars(novel.rating)}
-                  <span className="ml-2 text-mihrab-dark/70">{novel.rating}/5 ({comments.length} تقييمات)</span>
+                  {renderStars(4.5)}
+                  <span className="ml-2 text-mihrab-dark/70">4.5/5 ({comments.length} تقييمات)</span>
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-4">
                   <span className="bg-mihrab bg-opacity-10 text-mihrab-dark text-xs px-3 py-1 rounded-full">
                     {novel.category}
                   </span>
-                  {novel.tags.map((tag, index) => (
+                  {novel.tags?.map((tag, index) => (
                     <span key={index} className="bg-mihrab-beige text-mihrab-dark text-xs px-3 py-1 rounded-full">
                       {tag}
                     </span>
@@ -169,7 +191,7 @@ const NovelDetail = () => {
                   <div className="bg-mihrab-beige bg-opacity-30 p-3 rounded text-center">
                     <p className="text-xs text-mihrab-dark/70">تاريخ النشر</p>
                     <p className="font-bold text-mihrab-dark">
-                      {new Date(novel.publishDate).toLocaleDateString('ar-EG', {
+                      {new Date(novel.created_at || '').toLocaleDateString('ar-EG', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',
@@ -177,8 +199,10 @@ const NovelDetail = () => {
                     </p>
                   </div>
                   <div className="bg-mihrab-beige bg-opacity-30 p-3 rounded text-center">
-                    <p className="text-xs text-mihrab-dark/70">عدد الصفحات</p>
-                    <p className="font-bold text-mihrab-dark">{novel.pageCount}</p>
+                    <p className="text-xs text-mihrab-dark/70">الحالة</p>
+                    <p className="font-bold text-mihrab-dark">
+                      {novel.status === 'published' ? 'منشورة' : 'مسودة'}
+                    </p>
                   </div>
                   <div className="bg-mihrab-beige bg-opacity-30 p-3 rounded text-center">
                     <p className="text-xs text-mihrab-dark/70">التصنيف</p>
@@ -186,7 +210,7 @@ const NovelDetail = () => {
                   </div>
                   <div className="bg-mihrab-beige bg-opacity-30 p-3 rounded text-center">
                     <p className="text-xs text-mihrab-dark/70">التقييم</p>
-                    <p className="font-bold text-mihrab-dark">{novel.rating}/5</p>
+                    <p className="font-bold text-mihrab-dark">4.5/5</p>
                   </div>
                 </div>
                 
@@ -235,7 +259,7 @@ const NovelDetail = () => {
               <TabsContent value="description" className="p-6">
                 <h2 className="text-xl font-heading font-bold text-mihrab mb-4">عن الرواية</h2>
                 <div className="prose prose-lg max-w-none text-mihrab-dark/80 leading-relaxed whitespace-pre-line">
-                  {novel.fullDescription}
+                  {novel.full_description}
                 </div>
               </TabsContent>
               
@@ -295,10 +319,10 @@ const NovelDetail = () => {
                     lineHeight: readerSettings.lineHeight,
                   }}
                 >
-                  <p className="mb-4 font-heading font-bold text-center text-2xl">في محراب التوبة</p>
+                  <p className="mb-4 font-heading font-bold text-center text-2xl">{novel.title}</p>
                   <p className="mb-8 text-center">الفصل الأول</p>
                   <div className="whitespace-pre-line leading-relaxed">
-                    {novel.sample}
+                    {novel.sample || 'لا يوجد نموذج قراءة متاح لهذه الرواية.'}
                   </div>
                   <div className="text-center mt-8">
                     <Button 
