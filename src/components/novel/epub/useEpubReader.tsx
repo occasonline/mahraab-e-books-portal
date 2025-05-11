@@ -111,7 +111,7 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
       
       // تهيئة الكتاب باستخدام URL
       if (!url) {
-        setError('لم يتم تحديد مسار الكتاب الإلكتروني');
+        setError('لم يتم ��حديد مسار الكتاب الإلكتروني');
         setIsLoading(false);
         return;
       }
@@ -128,7 +128,7 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
         openAs: 'epub',
         encoding: 'binary',
         canonical: true,
-        resolver: function(path: string) {
+        resolver: function(path: string): string {
           // هذه الدالة تقوم بإرجاع المسار كما هو بدون أي تغيير
           return path;
         }
