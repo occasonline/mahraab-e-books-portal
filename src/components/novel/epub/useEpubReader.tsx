@@ -128,7 +128,11 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
       const newBook = epubjs.default(processedUrl, { 
         openAs: 'epub',
         encoding: 'binary',
-        canonical: true
+        canonical: true,
+        // Fix: Replace boolean 'true' with a proper path resolver function
+        resolver: (path: string) => {
+          return path;
+        }
       });
       
       book.current = newBook;
