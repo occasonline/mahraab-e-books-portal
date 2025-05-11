@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as epubjs from 'epubjs';
 import { useToast } from "@/components/ui/use-toast";
@@ -129,8 +128,7 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
         openAs: 'epub',
         encoding: 'binary',
         canonical: true,
-        // Fix: Replace boolean 'true' with a proper path resolver function
-        resolver: (path: string) => {
+        resolver: function(path: string): string {
           return path;
         }
       });
