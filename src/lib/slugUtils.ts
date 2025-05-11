@@ -6,26 +6,25 @@
 export const slugify = (text: string): string => {
   if (!text) return '';
   
-  // معالجة العلامات الخاصة مثل #
-  const preprocessed = text.replace(/#/g, 'hash');
+  // تنظيف النص من الرموز الخاصة وأحرف التنسيق
+  let cleanText = text.toString();
   
-  // استبدال المسافات والأحرف الخاصة بشرطات
-  let slug = preprocessed
-    .toString()
-    .trim()
-    .toLowerCase()
+  // معالجة العلامات الخاصة وتحويلها
+  cleanText = cleanText
+    .replace(/#/g, 'hash')
+    .replace(/[\u0600-\u06FF]/g, m => `ar${m.charCodeAt(0)}`) // تحويل الأحرف العربية إلى رموز آمنة
     .replace(/\s+/g, '-')
     .replace(/[^\w\-]+/g, '-')
     .replace(/\-\-+/g, '-')
     .replace(/^-+/, '')
     .replace(/-+$/, '');
-    
-  // إضافة بريفيكس للعناوين العربية
-  if (/[\u0600-\u06FF]/.test(text)) {
-    slug = `ar-${slug}`;
-  }
   
-  return slug;
+  let slug = cleanText.trim().toLowerCase();
+  
+  // التأكد من عدم وجود أي أحرف خاصة غير مدعومة
+  slug = slug.replace(/[^a-z0-9\-_]/g, '');
+  
+  return slug || 'epub-file';
 };
 
 /**
