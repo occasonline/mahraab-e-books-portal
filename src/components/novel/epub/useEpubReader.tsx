@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as epubjs from 'epubjs';
 import { useToast } from "@/hooks/use-toast";
@@ -111,7 +112,7 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
       
       // تهيئة الكتاب باستخدام URL
       if (!url) {
-        setError('لم يتم ��حديد مسار الكتاب الإلكتروني');
+        setError('لم يتم تحديد مسار الكتاب الإلكتروني');
         setIsLoading(false);
         return;
       }
@@ -128,7 +129,7 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
         openAs: 'epub',
         encoding: 'binary',
         canonical: true,
-        resolver: function(path: string): string {
+        resolver: (path: string): string => {
           // هذه الدالة تقوم بإرجاع المسار كما هو بدون أي تغيير
           return path;
         }
