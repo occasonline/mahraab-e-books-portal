@@ -129,7 +129,8 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
         openAs: 'epub',
         encoding: 'binary',
         canonical: true,
-        resolver: function(path: string): string {
+        resolver: (path: string): string => {
+          // هذه الدالة تقوم بإرجاع المسار كما هو بدون أي تغيير
           return path;
         }
       });
