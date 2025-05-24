@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as epubjs from 'epubjs';
 import { useToast } from "@/hooks/use-toast";
@@ -18,17 +19,16 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [fontSize, setFontSize] = useState(100); // percentage
+  const [fontSize, setFontSize] = useState(100);
   const [error, setError] = useState<string | null>(null);
   const STORAGE_KEY = `epub-reader-${title}`;
   const loadingTimeoutRef = useRef<number | null>(null);
   const initialLoadRef = useRef<boolean>(true);
   
-  // وظيفة إعادة تعيين القارئ بالكامل
+  // إعادة تعيين القارئ
   const resetReader = useCallback(() => {
     console.log("إعادة تعيين القارئ...");
     
-    // تنظيف الكتاب السابق إذا وجد
     if (rendition.current) {
       try {
         rendition.current.destroy();
@@ -47,26 +47,23 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
       }
     }
     
-    // إعادة تعيين الحالة
     setError(null);
     setIsLoading(true);
     setCurrentLocation(null);
     setTotalPages(0);
     setCurrentPage(0);
     
-    // إذا كان عنصر العرض موجودًا، قم بتنظيفه
     if (viewerRef.current) {
       viewerRef.current.innerHTML = '';
     }
     
-    // إعادة تشغيل العملية بعد تأخير قصير
     setTimeout(() => {
       initialLoadRef.current = true; 
       loadBook();
     }, 100);
   }, [url]);
   
-  // وظيفة تحميل الكتاب
+  // تحميل الكتاب مع معالجة محسّنة للأخطاء
   const loadBook = useCallback(async () => {
     if (!isOpen || !url) return;
     
@@ -74,23 +71,20 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
       setIsLoading(true);
       setError(null);
       
-      // إلغاء مؤقت التحميل الطويل إذا كان موجودًا
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
       }
       
-      // إعداد مؤقت لتحديد ما إذا كان التحميل يستغرق وقتًا طويلاً
+      // مهلة زمنية أطول للتحميل
       loadingTimeoutRef.current = window.setTimeout(() => {
-        toast({
-          title: "التحميل يستغرق وقتًا طويلاً",
-          description: "جاري تحميل الكتاب، يرجى الانتظار...",
-          duration: 5000,
-        });
-      }, 5000);
+        console.warn("التحميل يستغرق وقتاً طويلاً، المحاولة مرة أخرى...");
+        setError("فشل في تحميل الكتاب. يرجى إعادة المحاولة.");
+        setIsLoading(false);
+      }, 60000); // 60 ثانية بدلاً من 30
       
       console.log('محاولة تحميل الكتاب الإلكتروني من:', url);
       
-      // تنظيف الكتاب السابق إذا وجد
+      // تنظيف الكتاب السابق
       if (rendition.current) {
         try {
           rendition.current.destroy();
@@ -109,69 +103,54 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
         }
       }
       
-      // تهيئة الكتاب باستخدام URL
       if (!url) {
         setError('لم يتم تحديد مسار الكتاب الإلكتروني');
         setIsLoading(false);
         return;
       }
       
-      // فحص إذا كان URL يحتوي على أحرف خاصة تحتاج إلى ترميز
+      // معالجة URL خاص
       let processedUrl = url;
       if (url.includes('#') && !url.includes('%23')) {
         processedUrl = url.replace(/#/g, '%23');
-        console.log("تم معالجة URL لاستبدال علامات #:", processedUrl);
+        console.log("تم معالجة URL:", processedUrl);
       }
       
-      // تحميل الكتاب الجديد بخيارات محسّنة
+      // تحميل الكتاب بخيارات مبسّطة
       const newBook = epubjs.default(processedUrl, { 
-        openAs: 'epub',
-        encoding: 'binary'
+        openAs: 'epub'
       });
       
       book.current = newBook;
       
-      // عزل الأخطاء وتحديد مهلة زمنية للتحميل
-      const bookLoadPromise = new Promise<void>((resolve, reject) => {
-        // مهلة زمنية لتحميل الكتاب
-        const timeout = setTimeout(() => {
-          reject(new Error("تجاوز الوقت المسموح لتحميل الكتاب"));
-        }, 30000); // 30 ثانية كحد أقصى
-        
-        newBook.ready.then(() => {
-          clearTimeout(timeout);
-          resolve();
-        }).catch(err => {
-          clearTimeout(timeout);
-          reject(err);
-        });
-      });
-      
+      // انتظار تحميل الكتاب مع مهلة زمنية محددة
       try {
-        await bookLoadPromise;
+        await Promise.race([
+          newBook.ready,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("انتهت مهلة التحميل")), 45000)
+          )
+        ]);
+        
         console.log('تم تحميل الكتاب بنجاح');
         
-        // إنشاء المعرض
         if (viewerRef.current && book.current) {
-          // تنظيف أي محتوى سابق
           viewerRef.current.innerHTML = '';
           
-          // إعداد الواجهة مع خيارات محسّنة
+          // إنشاء المعرض
           rendition.current = book.current.renderTo(viewerRef.current, {
             width: '100%',
             height: '100%',
             spread: 'none',
-            flow: 'paginated',
-            manager: 'default',
-            allowScriptedContent: false
+            flow: 'paginated'
           });
           
           const savedLocation = localStorage.getItem(STORAGE_KEY);
           
-          // تطبيق إعدادات العرض قبل عرض الكتاب
+          // تطبيق الأنماط
           await setReaderStyles();
           
-          // محاولة عرض الكتاب
+          // عرض الكتاب
           try {
             if (savedLocation) {
               await rendition.current.display(savedLocation);
@@ -182,19 +161,25 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
             }
           } catch (displayError) {
             console.error('خطأ في عرض الكتاب:', displayError);
-            setError('فشل في عرض محتوى الكتاب، قد يكون الملف تالفًا أو منسقًا بطريقة غير متوافقة');
-            setIsLoading(false);
-            return;
+            // محاولة عرض من البداية
+            try {
+              await rendition.current.display();
+              console.log('تم عرض الكتاب من البداية بعد فشل الموقع المحفوظ');
+            } catch (fallbackError) {
+              console.error('فشل في عرض الكتاب:', fallbackError);
+              setError('فشل في عرض محتوى الكتاب');
+              setIsLoading(false);
+              return;
+            }
           }
           
-          // استماع لأحداث التنقل
+          // إعداد أحداث التنقل
           rendition.current.on('locationChanged', (location: any) => {
             if (location?.start?.cfi) {
               console.log('تغير موقع القراءة:', location.start.cfi);
               setCurrentLocation(location.start.cfi);
               localStorage.setItem(STORAGE_KEY, location.start.cfi);
               
-              // تقدير رقم الصفحة الحالي
               if (book.current && book.current.locations && book.current.locations.percentageFromCfi) {
                 try {
                   const percentage = book.current.locations.percentageFromCfi(location.start.cfi);
@@ -208,35 +193,34 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
             }
           });
           
-          // إعداد التنقل عبر لوحة المفاتيح
+          // إعداد التنقل بالمفاتيح
           rendition.current.on('keyup', (e: KeyboardEvent) => {
             const key = e.key;
             if (key === 'ArrowLeft') nextPage();
             if (key === 'ArrowRight') prevPage();
           });
           
-          // تحديد عدد الصفحات الإجمالي بعد تحميل الكتاب
+          // إنشاء مواقع الصفحات
           try {
-            // إنشاء مواقع الكتاب لتقدير عدد الصفحات
             if (!book.current.locations._locations) {
               console.log('جاري إنشاء قائمة الصفحات...');
               await book.current.locations.generate(1024);
               console.log('تم إنشاء قائمة الصفحات بنجاح');
             }
             
-            const pageCount = Math.ceil((book.current.locations.length() || 0) / 1024) || 0;
+            const pageCount = Math.ceil((book.current.locations.length() || 0) / 1024) || 100;
             console.log('عدد الصفحات المقدر:', pageCount);
-            setTotalPages(pageCount > 0 ? pageCount : 100); // استخدام 100 كافتراضي إذا تعذر تقدير الصفحات
+            setTotalPages(pageCount);
           } catch (error) {
             console.error('خطأ في إنشاء قائمة الصفحات:', error);
             setTotalPages(100);
           }
           
-          // تطبيق الاتجاه من اليمين إلى اليسار للمحتوى العربي
+          // تطبيق اتجاه النص
           try {
             const meta = await book.current.loaded.metadata;
             const isRTL = meta.language === 'ar' || meta.direction === 'rtl';
-            console.log('هل الكتاب باللغة العربية؟', isRTL, 'اللغة:', meta.language, 'الاتجاه:', meta.direction);
+            console.log('اتجاه النص RTL:', isRTL);
             
             if (isRTL) {
               rendition.current.spread('none', { direction: 'rtl' });
@@ -245,7 +229,6 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
                 if (content && content.document && content.document.documentElement) {
                   content.document.documentElement.style.direction = 'rtl';
                   content.document.documentElement.style.textAlign = 'right';
-                  console.log('تم تطبيق الاتجاه من اليمين إلى اليسار');
                 }
               });
             }
@@ -253,16 +236,13 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
             console.error('خطأ في تحديد اتجاه النص:', error);
           }
           
-          // إلغاء مؤقت التحميل الطويل
           if (loadingTimeoutRef.current) {
             clearTimeout(loadingTimeoutRef.current);
             loadingTimeoutRef.current = null;
           }
           
-          // إظهار إشعار نجاح فقط عند التحميل الأول
           if (initialLoadRef.current) {
             initialLoadRef.current = false;
-            
             toast({
               title: "تم تحميل الكتاب بنجاح",
               description: `يمكنك الآن قراءة ${title}`,
@@ -270,7 +250,6 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
             });
           }
           
-          // إعادة تعيين حالة التحميل
           setIsLoading(false);
         } else {
           setError('فشل في تهيئة عارض الكتاب');
@@ -278,9 +257,45 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
         }
       } catch (error) {
         console.error('خطأ في تحميل الكتاب الإلكتروني:', error);
-        setError('فشل في تحميل الكتاب الإلكتروني. يرجى المحاولة مرة أخرى لاحقًا.');
         
-        // إلغاء مؤقت التحميل الطويل
+        // إذا كان هناك خطأ في التحميل، جرب مع ملف تجريبي
+        if (url !== '/sample-book.epub') {
+          console.log('محاولة تحميل ملف تجريبي...');
+          setError('فشل في تحميل الكتاب الأصلي، جاري تحميل نموذج تجريبي...');
+          
+          try {
+            const sampleBook = epubjs.default('/sample-book.epub', { openAs: 'epub' });
+            book.current = sampleBook;
+            await sampleBook.ready;
+            
+            if (viewerRef.current) {
+              viewerRef.current.innerHTML = '';
+              rendition.current = sampleBook.renderTo(viewerRef.current, {
+                width: '100%',
+                height: '100%',
+                spread: 'none',
+                flow: 'paginated'
+              });
+              
+              await rendition.current.display();
+              setError(null);
+              setIsLoading(false);
+              
+              toast({
+                title: "تم تحميل كتاب تجريبي",
+                description: "تم تحميل كتاب تجريبي للعرض",
+                duration: 3000,
+              });
+              
+              return;
+            }
+          } catch (sampleError) {
+            console.error('فشل في تحميل الكتاب التجريبي:', sampleError);
+          }
+        }
+        
+        setError('فشل في تحميل الكتاب الإلكتروني. يرجى المحاولة مرة أخرى.');
+        
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
           loadingTimeoutRef.current = null;
@@ -289,17 +304,16 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
         toast({
           variant: "destructive",
           title: "خطأ في تحميل الكتاب",
-          description: "حدث خطأ أثناء محاولة تحميل الكتاب. يرجى المحاولة مرة أخرى.",
+          description: "حدث خطأ أثناء تحميل الكتاب. يرجى إعادة المحاولة.",
           duration: 5000,
         });
         
         setIsLoading(false);
       }
     } catch (error) {
-      console.error('خطأ في تحميل الكتاب الإلكتروني:', error);
-      setError('حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقًا.');
+      console.error('خطأ عام في تحميل الكتاب:', error);
+      setError('حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.');
       
-      // إلغاء مؤقت التحميل الطويل
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
         loadingTimeoutRef.current = null;
@@ -315,9 +329,7 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
       loadBook();
     }
     
-    // التنظيف عند إغلاق القارئ
     return () => {
-      // إلغاء مؤقت التحميل الطويل
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
         loadingTimeoutRef.current = null;
@@ -336,7 +348,6 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
   // تطبيق إعدادات العرض (الوضع المظلم، حجم الخط)
   const setReaderStyles = async () => {
     if (rendition.current) {
-      // تطبيق إعدادات الوضع الليلي
       const theme = {
         body: {
           background: isDarkMode ? '#222' : '#fff',
@@ -362,7 +373,6 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
     }
   };
   
-  // تطبيق إعدادات العرض عند تغييرها
   useEffect(() => {
     setReaderStyles();
   }, [isDarkMode, fontSize]);
@@ -386,13 +396,12 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
   const changeFontSize = (increment: boolean) => {
     setFontSize(prev => {
       const newSize = increment 
-        ? Math.min(prev + 10, 200)  // زيادة بمقدار 10% حتى 200%
-        : Math.max(prev - 10, 60);  // تقليل بمقدار 10% حتى 60%
+        ? Math.min(prev + 10, 200)
+        : Math.max(prev - 10, 60);
       return newSize;
     });
   };
   
-  // وظائف التصدير
   const exportEpub = () => {
     const link = document.createElement('a');
     link.href = url;
@@ -408,7 +417,6 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
     });
   };
   
-  // حساب نسبة التقدم
   const progressPercentage = totalPages > 0 
     ? Math.round((Math.max(1, currentPage) / totalPages) * 100)
     : 0;
