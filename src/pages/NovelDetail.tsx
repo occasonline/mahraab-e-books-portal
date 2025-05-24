@@ -1,16 +1,14 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getNovelById } from "@/services/novelService";
-import { getEpubDownloadUrl } from "@/services/epubService";
 import { Novel } from "@/types/supabase";
 import NovelHeader from '@/components/novel/NovelHeader';
 import NovelContentTabs from '@/components/novel/NovelContentTabs';
 import NovelReader from '@/components/novel/NovelReader';
-import EpubReader from '@/components/novel/EpubReader';
-import { createSafeEpubPath, slugify } from '@/lib/slugUtils';
 import SimpleEpubViewer from '@/components/novel/epub/SimpleEpubViewer';
 
 const NovelDetail = () => {
@@ -22,7 +20,6 @@ const NovelDetail = () => {
   const [isReaderOpen, setIsReaderOpen] = useState(false);
   const [isEpubReaderOpen, setIsEpubReaderOpen] = useState(false);
   const [epubUrl, setEpubUrl] = useState<string>('');
-  const [loadingEpub, setLoadingEpub] = useState(false);
   
   // Mock comments for now - could be replaced with real data in future
   const comments = [
@@ -59,48 +56,12 @@ const NovelDetail = () => {
       
       try {
         const fetchedNovel = await getNovelById(id);
-        console.log("Fetched novel content length:", fetchedNovel?.full_description?.length || 0);
-        console.log("Fetched novel sample:", fetchedNovel?.sample);
+        console.log("Fetched novel:", fetchedNovel?.title);
         setNovel(fetchedNovel);
         
-        // تحميل عنوان ملف EPUB إذا كان متاحاً
-        if (fetchedNovel?.sample) {
-          try {
-            setLoadingEpub(true);
-            console.log("جار تحميل EPUB من:", fetchedNovel.sample);
-            
-            // إنشاء مسار آمن للـ URL إذا كان لدينا عنوان للكتاب
-            let epubPath = fetchedNovel.sample;
-            
-            // التعامل مع الأسماء المعقدة التي تحتوي على علامات #
-            if (epubPath.includes('#')) {
-              // استخدام اسم ملف آمن بناءً على عنوان الكتاب
-              const safeFileName = createSafeEpubPath(fetchedNovel.title);
-              console.log("تحويل مسار معقد إلى مسار آمن:", safeFileName);
-              epubPath = safeFileName;
-            }
-            
-            // الحصول على رابط التحميل
-            const url = await getEpubDownloadUrl(epubPath);
-            console.log("EPUB URL:", url);
-            setEpubUrl(url);
-            
-          } catch (epubError) {
-            console.error("Error fetching EPUB URL:", epubError);
-            toast({
-              variant: "destructive",
-              title: "خطأ في تحميل الكتاب",
-              description: "حدث خطأ أثناء تحميل الكتاب الإلكتروني. سيتم استخدام نموذج بديل.",
-            });
-            setEpubUrl('/sample-book.epub'); // استخدام ملف تجريبي في حالة الخطأ
-          } finally {
-            setLoadingEpub(false);
-          }
-        } else {
-          console.log("Using sample EPUB");
-          // استخدام ملف EPUB تجريبي للعرض
-          setEpubUrl('/sample-book.epub');
-        }
+        // استخدام ملف EPUB تجريبي للآن بدلاً من محاولة استخدام نص الرواية كمسار
+        console.log("Using sample EPUB file");
+        setEpubUrl('/sample-book.epub');
         
         setLoading(false);
       } catch (error) {
@@ -124,12 +85,8 @@ const NovelDetail = () => {
         description: "يرجى الترقية إلى العضوية المدفوعة للوصول إلى هذه الرواية.",
       });
     } else {
-      // استخدام القارئ البسيط الجديد
-      if (epubUrl && epubUrl !== '/sample-book.epub') {
-        setIsEpubReaderOpen(true);
-      } else {
-        setIsReaderOpen(true);
-      }
+      // استخدام القارئ العادي مع نص الرواية
+      setIsReaderOpen(true);
     }
   };
   
@@ -190,7 +147,7 @@ const NovelDetail = () => {
             hasEpub={!!epubUrl}
           />
           
-          {/* قارئ الكتاب القديم - سنبقيه كنسخة احتياطية */}
+          {/* قارئ الكتاب العادي */}
           <NovelReader 
             title={novel.title}
             content={novel.full_description || novel.sample || ''}
@@ -198,7 +155,7 @@ const NovelDetail = () => {
             onClose={() => setIsReaderOpen(false)}
           />
           
-          {/* قارئ EPUB الجديد */}
+          {/* قارئ EPUB البسيط */}
           <SimpleEpubViewer
             title={novel.title}
             url={epubUrl}
