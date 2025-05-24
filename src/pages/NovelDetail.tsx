@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from "@/components/layout/Layout";
@@ -12,6 +11,7 @@ import NovelContentTabs from '@/components/novel/NovelContentTabs';
 import NovelReader from '@/components/novel/NovelReader';
 import EpubReader from '@/components/novel/EpubReader';
 import { createSafeEpubPath, slugify } from '@/lib/slugUtils';
+import SimpleEpubViewer from '@/components/novel/epub/SimpleEpubViewer';
 
 const NovelDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -124,22 +124,11 @@ const NovelDetail = () => {
         description: "يرجى الترقية إلى العضوية المدفوعة للوصول إلى هذه الرواية.",
       });
     } else {
-      // افتح قارئ EPUB إذا كان متاحاً، وإلا استخدم القارئ القديم
-      if (epubUrl) {
-        console.log("Opening EPUB reader with URL:", epubUrl);
+      // استخدام القارئ البسيط الجديد
+      if (epubUrl && epubUrl !== '/sample-book.epub') {
         setIsEpubReaderOpen(true);
-        
-        toast({
-          title: "تم فتح الكتاب الإلكتروني",
-          description: `استمتع بقراءة ${novel?.title}!`,
-        });
       } else {
         setIsReaderOpen(true);
-        
-        toast({
-          title: "تم فتح الرواية",
-          description: `استمتع بقراءة ${novel?.title}!`,
-        });
       }
     }
   };
@@ -210,7 +199,7 @@ const NovelDetail = () => {
           />
           
           {/* قارئ EPUB الجديد */}
-          <EpubReader
+          <SimpleEpubViewer
             title={novel.title}
             url={epubUrl}
             isOpen={isEpubReaderOpen}

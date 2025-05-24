@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import NovelReader from './NovelReader';
@@ -97,23 +96,15 @@ const NovelSampleTab = ({
           >
             متابعة القراءة
           </Button>
-          
-          {hasEpub && onOpenEpubReader ? (
-            <Button
-              onClick={onOpenEpubReader}
-              className="bg-mihrab-gold hover:bg-mihrab-gold/80"
-            >
-              قراءة بتنسيق EPUB
-            </Button>
-          ) : (
-            <Button
-              onClick={() => setIsReaderOpen(true)}
-              className="bg-mihrab-gold hover:bg-mihrab-gold/80"
-            >
-              قراءة بتأثير الكتاب
-            </Button>
-          )}
-        </div>
+        
+        {hasEpub && onOpenEpubReader && (
+          <Button
+            onClick={onOpenEpubReader}
+            className="bg-mihrab-gold hover:bg-mihrab-gold/80"
+          >
+            قراءة بتنسيق EPUB
+          </Button>
+        )}
       </div>
       
       {/* Novel Flip Book Reader */}
