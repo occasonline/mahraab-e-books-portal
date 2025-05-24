@@ -126,12 +126,7 @@ export const useEpubReader = ({ url, title, isOpen }: UseEpubReaderProps) => {
       // تحميل الكتاب الجديد بخيارات محسّنة
       const newBook = epubjs.default(processedUrl, { 
         openAs: 'epub',
-        encoding: 'binary',
-        canonical: true,
-        resolver: function(path: string): string {
-          // هذه الدالة تقوم بإرجاع المسار كما هو بدون أي تغيير
-          return path;
-        }
+        encoding: 'binary'
       });
       
       book.current = newBook;
